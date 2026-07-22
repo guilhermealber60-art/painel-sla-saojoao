@@ -63,7 +63,7 @@ Use o botão **Base de gestores** no painel para corrigir Coordenador/Distrital/
 
 ## Exportações
 
-- **Excel** — resumo, coordenadores, distritais, plataformas, filiais e finalizações suspeitas.
+- **Exportar pedidos em atraso** — planilha `.xlsx` com todos os pedidos em atraso do filtro aplicado no momento (pedido, filial, gestores, plataforma, entregador, modalidade, horários e tempos de separação/coleta/entrega).
 - **Imagem (slides)** — cada seção do painel como PNG, no tamanho de slide.
 
 ## Estrutura

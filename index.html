@@ -103,7 +103,7 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
  <div class="tbtns">
   <button class="tbtn primary" onclick="openUpload()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Atualizar dados</button>
   <button class="tbtn" onclick="openBase()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Base de gestores</button>
-  <button class="tbtn" onclick="exportExcel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8l8 8M16 8l-8 8"/></svg>Excel</button>
+  <button class="tbtn" onclick="exportAtrasados()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8l8 8M16 8l-8 8"/></svg>Exportar pedidos em atraso</button>
   <button class="tbtn" onclick="exportSlides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 5-5 4 4"/></svg>Imagem (slides)</button>
   <button class="tbtn" onclick="publishSnapshot()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4"/><path d="M4 21h16"/></svg>Publicar (snapshot)</button>
  </div>
@@ -323,15 +323,18 @@ async function processFiles(){const fv=document.getElementById('fVtex').files[0]
   toast('Painel atualizado.');setTimeout(()=>closeOvl('ovlUpload'),700);
  }catch(err){log('ERRO: '+err.message);toast('Falha ao processar.');}
  document.getElementById('btnProcess').disabled=false;}
-function exportExcel(){if(!ROWS.length){toast('Carregue dados primeiro.');return;}const{m,susp}=window.__last,wb=XLSX.utils.book_new();
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Painel de Entregas — Farmácias São João'],['Geração',GEN],[],['Indicador','Valor'],['SLA Geral',fmtPct(m.slaGeral)],['SLA Uber+99',fmtPct(m.slaU)],['SLA Terceirizado',fmtPct(m.slaO)],['Pedidos',m.sucessos],['No prazo',m.noprazo],['Atrasos',m.atraso],['Tempo médio sep. Rápida',dur(m.rapSep)],['Tempo médio do pedido',dur(m.avgTot)],['Média separação',dur(m.avgSep)],['Média coleta',dur(m.avgCol)],['Média entrega',dur(m.avgEnt)],['Falha na Separação',m.motSep],['Falha na Entrega',m.motEnt],[],['Entrega Rápida São João — pedidos',m.sj.n],['— No prazo',m.sj.np],['— Atrasos',m.sj.at],['— SLA',fmtPct(m.sj.sla)]]),'Resumo');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Coordenador','Pedidos','No prazo','Atrasos','NS'],...m.coord.map(x=>[x.nm,x.n,x.np,x.at,fmtPct(x.sla)])]),'Coordenadores');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Distrital','Pedidos','No prazo','Atrasos','NS'],...m.dist.map(x=>[x.nm,x.n,x.np,x.at,fmtPct(x.sla)])]),'Distritais');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Plataforma','Entregues','Atrasos','SLA','% dos atrasos'],...m.platAtr.map(x=>[x.nm,x.suc,x.atr,fmtPct(pct(x.suc-x.atr,x.suc)),m.atraso?fmtPct(x.atr/m.atraso):''])]),'Plataformas');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['#','Filial','Atrasos'],...m.filAtr.map((x,i)=>[i+1,x.nm,x.c])]),'Filiais atrasos');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['#','Filial','Média sep. (min)','Ped. rápida'],...m.filRap.map((x,i)=>[i+1,x.nm,(x.avg/60).toFixed(1),x.n])]),'Média separação');
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['#','Entregador','Filial','Plataformas','Entregas','Dias','Máx 10min','Máx 2min','Ocioso→rajada','Score'],...susp.slice(0,100).map((d,i)=>[i+1,d.nm,d.filial,d.plat,d.total,d.days,d.worst10,d.worst2,d.idle,d.score])]),'Finalizações suspeitas');
- XLSX.writeFile(wb,'Painel_SLA_SaoJoao_'+dateStr(new Date())+'.xlsx');toast('Excel exportado.');}
+function exportAtrasados(){if(!ROWS.length){toast('Carregue dados primeiro.');return;}
+ const rows=activeRows().filter(r=>r[C.ST]===1);
+ if(!rows.length){toast('Nenhum pedido em atraso no filtro atual.');return;}
+ const fmtDT=mn=>{const d=minToDate(mn);return d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'—';};
+ const sepLabel=v=>v===0?'No prazo':v===1?'Atraso':'—';
+ const header=['Pedido','Código filial','Filial','Regional','Diretor','Distrital','Coordenador','Plataforma','Entregador','Modalidade','Grupo entrega','Entrega rápida','Entrega Rápida São João','Criado em','Entregue em','Separação','Tempo separação','Tempo coleta','Tempo entrega'];
+ const data=rows.map(r=>[r[C.PED],r[C.COD],DICTS.FIL[r[C.FIL]],DICTS.REG[r[C.REG]],DICTS.DIR[r[C.DIR]],DICTS.DIS[r[C.DIS]],DICTS.COO[r[C.COO]],DICTS.PLA[r[C.PLA]],DICTS.ENT[r[C.ENT]],DICTS.MOD[r[C.MOD]],r[C.GRP]===1?'Uber/99':'Outros',r[C.RAP]===1?'Sim':'Não',r[C.RSJ]===1?'Sim':'Não',fmtDT(r[C.CRIA]),fmtDT(r[C.CHEG]),sepLabel(r[C.SEP]),dur(r[C.TSEP]),dur(r[C.TCOL]),dur(r[C.TENT])]);
+ const wb=XLSX.utils.book_new();
+ const ws=XLSX.utils.aoa_to_sheet([['Pedidos em atraso — Painel SLA Farmácias São João'],['Geração',GEN],['Total de pedidos em atraso no filtro',rows.length],[],header,...data]);
+ XLSX.utils.book_append_sheet(wb,ws,'Pedidos em atraso');
+ XLSX.writeFile(wb,'Pedidos_em_atraso_'+dateStr(new Date())+'.xlsx');
+ toast(rows.length+' pedidos em atraso exportados.');}
 async function exportSlides(){if(!ROWS.length){toast('Carregue dados primeiro.');return;}toast('Gerando imagens…');const sl=[...document.querySelectorAll('.slide')];
  for(let i=0;i<sl.length;i++){const cv=await html2canvas(sl[i],{scale:2,backgroundColor:'#EDEFF4',windowWidth:1560});const a=document.createElement('a');a.download=`Painel_SLA_slide${i+1}.png`;a.href=cv.toDataURL('image/png');a.click();await new Promise(r=>setTimeout(r,350));}
  toast('Imagens exportadas ('+sl.length+' slides).');}
