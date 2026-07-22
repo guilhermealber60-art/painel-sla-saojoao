@@ -105,7 +105,8 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
   <button class="tbtn" onclick="openBase()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Base de gestores</button>
   <button class="tbtn" onclick="exportAtrasados()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8l8 8M16 8l-8 8"/></svg>Exportar pedidos em atraso</button>
   <button class="tbtn" onclick="exportSlides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 5-5 4 4"/></svg>Imagem (slides)</button>
-  <button class="tbtn" onclick="publishSnapshot()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4"/><path d="M4 21h16"/></svg>Publicar (snapshot)</button>
+  <button class="tbtn" id="btnPublish" onclick="publishSnapshot()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4"/><path d="M4 21h16"/></svg>Publicar (snapshot)</button>
+  <button class="tbtn" onclick="openConfig()" title="Configurar publicação direta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Config. publicação</button>
  </div>
 </header>
 <div class="filters" id="filters"></div>
@@ -127,6 +128,13 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
  <input id="baseSearch" placeholder="Buscar por código ou filial…" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;font-size:13px">
  <div class="scroll" style="max-height:360px;border:1px solid var(--line2);border-radius:8px"><table class="baseTbl"><thead><tr><th>Cód</th><th>Filial</th><th>Coordenador</th><th>Distrital</th><th>Diretor</th><th>Regional</th></tr></thead><tbody id="baseBody"></tbody></table></div>
  <div class="mbtns"><button class="btn primary" onclick="saveBase()">Salvar e recalcular</button><button class="btn" onclick="closeOvl('ovlBase')">Fechar</button></div>
+</div></div></div>
+
+<div class="ovl" id="ovlConfig"><div class="modal"><div class="mh"><h3>Publicar direto no GitHub</h3><button class="x" onclick="closeOvl('ovlConfig')">×</button></div><div class="mb">
+ <div class="note">Com um token configurado, o botão <b>Publicar</b> envia <code>data/snapshot.json</code> e <code>data/lojas.json</code> direto para o repositório <code>guilhermealber60-art/painel-sla-saojoao</code> — sem baixar arquivo, sem git, sem terminal. Qualquer pessoa que configure o token no próprio navegador também consegue publicar.</div>
+ <div class="note" style="background:var(--redbg);border-color:var(--red);color:var(--text)"><b>Segurança:</b> o token fica salvo só neste navegador (não é enviado a mim nem a ninguém além do GitHub). Crie um <b>fine-grained token</b> em <b>github.com/settings/tokens</b>, restrito ao repositório <b>painel-sla-saojoao</b>, com permissão apenas de <b>Contents: Read and write</b>, e defina uma expiração (ex.: 1 ano). Não use um token com acesso a outros repositórios. Se trocar de computador ou navegador, precisa configurar de novo lá.</div>
+ <div class="drop"><label>Token de acesso (GitHub)</label><input type="password" id="cfgToken" placeholder="github_pat_…" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:13px"></div>
+ <div class="mbtns"><button class="btn primary" onclick="saveToken()">Salvar</button><button class="btn" onclick="closeOvl('ovlConfig')">Fechar</button><button class="btn danger" onclick="removeToken()" style="margin-left:auto">Remover token deste navegador</button></div>
 </div></div></div>
 <div class="toast" id="toast"></div>
 
@@ -339,13 +347,35 @@ async function exportSlides(){if(!ROWS.length){toast('Carregue dados primeiro.')
  for(let i=0;i<sl.length;i++){const cv=await html2canvas(sl[i],{scale:2,backgroundColor:'#EDEFF4',windowWidth:1560});const a=document.createElement('a');a.download=`Painel_SLA_slide${i+1}.png`;a.href=cv.toDataURL('image/png');a.click();await new Promise(r=>setTimeout(r,350));}
  toast('Imagens exportadas ('+sl.length+' slides).');}
 function dl(name,text){const b=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
-function publishSnapshot(){if(!ROWS.length){toast('Carregue os dados primeiro (Atualizar dados).');return;}
- dl('snapshot.json',JSON.stringify({gen:GEN,dicts:DICTS,rows:ROWS}));
- dl('lojas.json',JSON.stringify(LOJAS));
- toast('snapshot.json e lojas.json baixados — substitua-os na pasta data/ do repositório e faça commit.');}
+const GH_OWNER='guilhermealber60-art',GH_REPO='painel-sla-saojoao',GH_BRANCH='main';
+const ghToken=()=>localStorage.getItem('ghToken')||'';
+const b64utf8=s=>btoa(unescape(encodeURIComponent(s)));
+async function ghGetSha(path,token){
+ const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}?ref=${GH_BRANCH}`,{headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'}});
+ if(r.status===404)return null;
+ if(!r.ok)throw new Error(path+': falha ao consultar ('+r.status+')');
+ return (await r.json()).sha;}
+async function ghPut(path,content,message,token){
+ const sha=await ghGetSha(path,token);
+ const body={message,content:b64utf8(content),branch:GH_BRANCH};if(sha)body.sha=sha;
+ const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}`,{method:'PUT',headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+ if(!r.ok){const t=await r.text();throw new Error(path+': '+r.status+' — '+t.slice(0,200));}}
+function updatePublishBtn(){const b=document.getElementById('btnPublish');if(b)b.lastChild.textContent=ghToken()?'Publicar no GitHub':'Publicar (snapshot)';}
+function openConfig(){document.getElementById('cfgToken').value=ghToken();document.getElementById('ovlConfig').classList.add('show');}
+function saveToken(){const v=document.getElementById('cfgToken').value.trim();if(!v){toast('Cole um token válido.');return;}localStorage.setItem('ghToken',v);updatePublishBtn();closeOvl('ovlConfig');toast('Token salvo neste navegador. Publicar agora vai direto pro GitHub.');}
+function removeToken(){if(!ghToken()){toast('Nenhum token salvo.');return;}if(!confirm('Remover o token salvo neste navegador? Você volta a precisar baixar e subir os arquivos manualmente. Isso não revoga o token no GitHub — para revogar de vez, apague-o em github.com/settings/tokens.'))return;localStorage.removeItem('ghToken');document.getElementById('cfgToken').value='';updatePublishBtn();toast('Token removido deste navegador.');}
+async function publishSnapshot(){if(!ROWS.length){toast('Carregue os dados primeiro (Atualizar dados).');return;}
+ const token=ghToken(),snap=JSON.stringify({gen:GEN,dicts:DICTS,rows:ROWS}),loj=JSON.stringify(LOJAS);
+ if(!token){dl('snapshot.json',snap);dl('lojas.json',loj);toast('snapshot.json e lojas.json baixados — substitua-os na pasta data/ do repositório e faça commit. Dica: configure "Config. publicação" para publicar direto, sem isso.');return;}
+ toast('Publicando no GitHub…');
+ try{
+  await ghPut('data/snapshot.json',snap,'Dados de '+dateStr(new Date()),token);
+  await ghPut('data/lojas.json',loj,'Base de gestores de '+dateStr(new Date()),token);
+  toast('Publicado no GitHub! O site atualiza para todos em alguns minutos.');
+ }catch(e){toast('Falha ao publicar: '+e.message);}}
 async function boot(){
  try{const lj=await fetch('data/lojas.json',{cache:'no-store'});if(lj.ok){const j=await lj.json();if(Array.isArray(j)&&j.length){LOJAS=j;try{localStorage.setItem('lojasBase',JSON.stringify(LOJAS));}catch(e){}}}}catch(e){}
  try{const sn=await fetch('data/snapshot.json',{cache:'no-store'});if(sn.ok){const s=await sn.json();if(s&&s.rows&&s.rows.length){DICTS=s.dicts;ROWS=s.rows;GEN=s.gen||GEN;}}}catch(e){}
- buildFilters();render();}
+ updatePublishBtn();buildFilters();render();}
 boot();
 </script></body></html>
