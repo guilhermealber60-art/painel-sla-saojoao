@@ -42,22 +42,30 @@ Se precisar começar um período do zero (ex.: virada de mês), use o botão **A
 
 ## Atualizar os dados do dia (rotina)
 
-1. Abra o site publicado (ou o `index.html` local).
+**Opção recomendada — publicar direto do painel, sem git:**
+
+1. No painel, clique em **Config. publicação** (ícone de engrenagem) e cole um token de acesso do GitHub (veja como criar abaixo). Isso fica salvo só no seu navegador — faça isso uma vez em cada computador/navegador que for usar.
 2. Clique em **Atualizar dados** e envie os 3 CSVs do dia (VTEX Report, Abbiamo ORDERS, Abbiamo EVENTS). A base de gestores (`Lojas`) já vem carregada; só reenvie se a estrutura mudar.
-3. Clique em **Publicar (snapshot)**. O navegador baixa `snapshot.json` (e `lojas.json`, se você tiver editado a base).
-4. Substitua esses arquivos na pasta `data/` do repositório e faça commit. Pela web: **Add file → Upload files** dentro da pasta `data/`, envie os arquivos e confirme. Pelo terminal:
+3. Clique em **Publicar no GitHub**. Pronto — grava `data/snapshot.json` e `data/lojas.json` direto no repositório. O site atualiza para todos em alguns minutos.
+
+**Como criar o token:** em [github.com/settings/tokens](https://github.com/settings/tokens) → **Fine-grained tokens** → **Generate new token** → em **Repository access**, escolha **Only select repositories** e marque `painel-sla-saojoao` → em **Permissions**, dê **Contents: Read and write** (nenhuma outra) → defina uma expiração → gere e cole no painel. Um token assim só consegue mexer nesse repositório, nada além disso.
+
+**Alternativa sem token — baixar e subir manualmente:**
+
+1. Clique em **Publicar (snapshot)** sem token configurado. O navegador baixa `snapshot.json` (e `lojas.json`, se você tiver editado a base).
+2. Substitua esses arquivos na pasta `data/` do repositório e faça commit. Pela web: **Add file → Upload files** dentro da pasta `data/` (não solte na raiz — tem que entrar na pasta `data/` primeiro) e confirme. Pelo terminal:
    ```bash
    git add data/snapshot.json data/lojas.json
    git commit -m "Dados de AAAA-MM-DD"
    git push
    ```
-5. O site atualiza sozinho para todos em alguns minutos.
+3. O site atualiza sozinho para todos em alguns minutos.
 
 ---
 
 ## Editar a base de gestores
 
-Use o botão **Base de gestores** no painel para corrigir Coordenador/Distrital/Diretor/Regional de uma filial (vinculado pelo **código** da loja). Depois clique em **Publicar (snapshot)** e faça commit do `lojas.json` para valer para todos.
+Use o botão **Base de gestores** no painel para corrigir Coordenador/Distrital/Diretor/Regional de uma filial (vinculado pelo **código** da loja). Depois clique em **Publicar** (direto pelo GitHub, ou baixando e commitando o `lojas.json`) para valer para todos.
 
 ---
 
