@@ -353,12 +353,14 @@ const b64utf8=s=>btoa(unescape(encodeURIComponent(s)));
 async function ghGetSha(path,token){
  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}?ref=${GH_BRANCH}`,{headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'}});
  if(r.status===404)return null;
+ if(r.status===401)throw new Error('Token inválido ou expirado — abra "Config. publicação" e cole um token novo.');
  if(!r.ok)throw new Error(path+': falha ao consultar ('+r.status+')');
  return (await r.json()).sha;}
 async function ghPut(path,content,message,token){
  const sha=await ghGetSha(path,token);
  const body={message,content:b64utf8(content),branch:GH_BRANCH};if(sha)body.sha=sha;
  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}`,{method:'PUT',headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+ if(r.status===401)throw new Error('Token inválido ou expirado — abra "Config. publicação" e cole um token novo.');
  if(!r.ok){const t=await r.text();throw new Error(path+': '+r.status+' — '+t.slice(0,200));}}
 function updatePublishBtn(){const b=document.getElementById('btnPublish');if(b)b.lastChild.textContent=ghToken()?'Publicar no GitHub':'Publicar (snapshot)';}
 function openConfig(){document.getElementById('cfgToken').value=ghToken();document.getElementById('ovlConfig').classList.add('show');}
