@@ -1,0 +1,9 @@
+# Nunca versionar as exportações brutas (arquivos enormes / dados sensíveis)
+*.csv
+*.xlsm
+*.xlsx
+
+# Lixo de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
