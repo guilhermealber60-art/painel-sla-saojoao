@@ -10,10 +10,14 @@ Painel de nível de serviço (SLA) do e-commerce, para acompanhamento diário e 
 
 O painel carrega automaticamente os arquivos versionados em `data/`:
 
-- `data/snapshot.json` — os pedidos já processados do período (o que todos veem ao abrir o link).
+- `data/snapshot.json` — todos os pedidos já acumulados (o que todos veem ao abrir o link).
 - `data/lojas.json` — a base fixa de Coordenadores, Distritais, Diretores e Regionais por filial.
 
+**Cada "Atualizar dados" soma os pedidos do dia aos que já estavam publicados** (deduplicados pelo número do pedido — se o mesmo pedido aparecer de novo, a versão mais recente vence). Ou seja, você pode enviar só os CSVs do dia, sem precisar reexportar o período inteiro toda vez; o painel acumula sozinho.
+
 Cada atualização é um **commit** no Git, então você tem histórico completo (pode ver e voltar a qualquer versão) e qualquer pessoa com o link enxerga sempre a última publicada.
+
+Se precisar começar um período do zero (ex.: virada de mês), use o botão **Apagar dados acumulados** dentro de "Atualizar dados" — ele some com todos os pedidos carregados na tela (não dá pra desfazer localmente; só recuperando um `snapshot.json` antigo pelo histórico do Git) e depois é só publicar de novo.
 
 ---
 
