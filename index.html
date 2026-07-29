@@ -51,7 +51,7 @@ h1,h2,h3{font-family:Archivo,sans-serif;margin:0}button{font-family:inherit;curs
 .card .hd h3{font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2)}
 .card .hd .tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--line2);padding:2px 7px;border-radius:20px}
 .hd .rangepick{display:flex;align-items:center;gap:4px;margin-left:10px}
-.hd .rangepick input{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 6px;font-size:10.5px;font-family:inherit;color:var(--text);height:22px}
+.hd .rangepick input,.hd .rangepick select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 6px;font-size:10.5px;font-family:inherit;color:var(--text);height:22px}
 .hd .rangepick span{font-size:10px;color:var(--muted)}
 .hd .rangepick button{border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:0 7px;height:22px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer}
 .card .bd{padding:13px 15px}
@@ -148,7 +148,7 @@ const EPOCH=new Date(2026,0,1);
 let DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]}, ROWS=[], GEN='—';
 let LOJAS=[]; try{LOJAS=JSON.parse(localStorage.getItem('lojasBase')||'[]')}catch(e){}
 const state={reg:new Set(),fil:new Set(),dis:new Set(),coo:new Set(),dir:new Set(),pla:new Set(),mod:new Set(),grp:new Set(),ini:'',fim:''};
-const chartState={ini:'',fim:''};
+const chartState={ini:'',fim:'',pla:''};
 const FKEYS=[['reg','Regional','REG',C.REG],['fil','Filial','FIL',C.FIL],['dis','Distrital','DIS',C.DIS],['coo','Coordenador','COO',C.COO],['dir','Diretor','DIR',C.DIR],['pla','Plataforma','PLA',C.PLA],['mod','Modalidade','MOD',C.MOD],['grp','Grupo entrega','GRP',C.GRP]];
 const fmtInt=n=>Math.round(n).toLocaleString('pt-BR');
 const pct=(a,b)=>b?a/b:0;
@@ -221,7 +221,9 @@ function renderSuspect(s){if(!s.length)return `<div class="card"><div class="bd 
  const b=s.slice(0,40).map((d,i)=>{const t=[];if(d.worst10>=5)t.push(`<span class="rtag ${d.worst10>=15?'r':''}">rajada · ${d.worst10} em 10min</span>`);if(d.worst2>=3)t.push(`<span class="rtag ${d.worst2>=10?'r':''}">simultâneas · ${d.worst2} em 2min</span>`);if(d.idle>0)t.push(`<span class="rtag">ocioso→rajada · ${d.idle}d</span>`);
   return `<tr class="${d.worst10>=15||d.worst2>=10?'warnrow':''}"><td><span class="rk">${i+1}</span></td><td>${esc(d.nm)}<div style="font-size:10px;color:var(--muted)">${esc(d.plat)}</div></td><td>${esc(d.filial)||'—'}${d.nfil>1?`<div style="font-size:10px;color:var(--muted)">${d.nfil} filiais</div>`:''}</td><td class="num">${d.total}</td><td class="num">${d.days}</td><td><div class="reasons">${t.join('')}</div></td><td class="num mono">${d.score}</td></tr>`;}).join('');
  return `<div class="card"><div class="hd"><h3>Entregadores com padrão atípico de finalização</h3><span class="tag">${s.length} sinalizados</span></div><div style="font-size:11.5px;color:var(--muted);padding:10px 15px">Sinais: rajada de entregas na mesma janela, finalizações quase simultâneas, ou ocioso o dia todo e depois várias em pouco tempo. Indícios para cobrança direcionada — não conclusões.</div><div class="scroll"><table><thead><tr><th style="width:32px">#</th><th>Entregador</th><th>Filial</th><th class="num">Entregas</th><th class="num">Dias</th><th>Sinais</th><th class="num">Score</th></tr></thead><tbody>${b}</tbody></table></div></div>`;}
-function weeklyRapida(rows){const by={};for(const r of rows){if(r[C.RAP]!==1)continue;const cm=r[C.CRIA];if(cm<0)continue;const d=dateStr(minToDate(cm));const o=by[d]||(by[d]={sep:0,sepN:0,np:0,tot:0});if(r[C.TSEP]>=0){o.sep+=r[C.TSEP];o.sepN++;}if(r[C.ST]>=0){o.tot++;if(r[C.ST]===0)o.np++;}}
+function weeklyRapida(rows){const by={};for(const r of rows){const cm=r[C.CRIA];if(cm<0)continue;const d=dateStr(minToDate(cm));const o=by[d]||(by[d]={sep:0,sepN:0,np:0,tot:0});
+  if(r[C.ST]>=0){o.tot++;if(r[C.ST]===0)o.np++;}
+  if(r[C.RAP]===1&&r[C.TSEP]>=0){o.sep+=r[C.TSEP];o.sepN++;}}
  return Object.keys(by).sort().map(d=>({d,sepMin:by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d].tot?by[d].np/by[d].tot:null,n:by[d].tot}));}
 function chartRapida(series){
  if(!series.length)return '<div class="empty">Sem pedidos de Entrega Rápida no filtro atual.</div>';
@@ -250,8 +252,8 @@ function gaugeSLA(g){
  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter">
   <path d="${arc(-90,split)}" fill="none" stroke="var(--green)" stroke-width="${T}" stroke-linecap="round"/>
   <path d="${arc(split,90)}" fill="none" stroke="var(--red)" stroke-width="${T}" stroke-linecap="round"/>
-  <text x="${lx.toFixed(1)}" y="${(ly-10).toFixed(1)}" text-anchor="start" font-size="13" font-weight="700" fill="var(--green)">${fmtPct(g.sla)}</text>
-  <text x="${rx.toFixed(1)}" y="${(ry-10).toFixed(1)}" text-anchor="end" font-size="13" font-weight="700" fill="var(--red)">${fmtPct(1-g.sla)}</text>
+  <text x="${(lx-16).toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="end" font-size="13" font-weight="700" fill="var(--green)">${fmtPct(g.sla)}</text>
+  <text x="${(rx+16).toFixed(1)}" y="${(ry+3).toFixed(1)}" text-anchor="start" font-size="13" font-weight="700" fill="var(--red)">${fmtPct(1-g.sla)}</text>
   <text x="${cx}" y="${cy-16}" text-anchor="middle" font-size="28" font-weight="800" fill="var(--ink2)">${fmtPct(g.sla)}</text>
   <text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="11" fill="var(--muted)">nível de serviço</text>
   <text x="${cx}" y="${H-14}" text-anchor="middle" font-size="11.5" fill="var(--muted)">Média de separação (rápida): <tspan font-weight="700" fill="var(--ink2)">${dur(g.avgSep)}</tspan></text>
@@ -261,7 +263,8 @@ function render(){
  const rows=activeRows(),m=compute(rows),susp=computeSuspect(rows);
  const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML=`<b>${fmtInt(m.sucessos)}</b> pedidos no filtro`;
  const maxSuc=Math.max(1,...m.platAtr.map(x=>x.suc));const platSuc=m.platAtr.slice().sort((a,b)=>b.suc-a.suc);
- const wkFull=weeklyRapida(rows);const wkMin=wkFull.length?wkFull[0].d:'';const wkMax=wkFull.length?wkFull[wkFull.length-1].d:'';
+ const wkRows=chartState.pla?rows.filter(r=>valOf('pla',r)===chartState.pla):rows;
+ const wkFull=weeklyRapida(wkRows);const wkMin=wkFull.length?wkFull[0].d:'';const wkMax=wkFull.length?wkFull[wkFull.length-1].d:'';
  const wkDefFrom=wkMax?(shiftDate(wkMax,-6)<wkMin?wkMin:shiftDate(wkMax,-6)):wkMin;
  const wkFrom=chartState.ini||wkDefFrom,wkTo=chartState.fim||wkMax;
  const wkSeries=wkFull.filter(s=>(!wkFrom||s.d>=wkFrom)&&(!wkTo||s.d<=wkTo));
@@ -293,7 +296,7 @@ function render(){
   </div>
   <div style="height:16px"></div>
   <div class="grid cols-2">
-   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD (Entrega Rápida)</h3><span class="tag">exc. São João</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Média de Separação</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--amber);border-radius:2px;vertical-align:-1px"></span> % No prazo (OTD)</span></div></div></div>
+   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD geral</h3><span class="tag">separação: rápida exc. São João</span><div class="rangepick"><select id="wkPla" onchange="onWkPlaChange()"><option value="">Todas plataformas</option>${optionsFor('pla').map(o=>`<option value="${esc(o)}" ${chartState.pla===o?'selected':''}>${esc(o)}</option>`).join('')}</select><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Média de Separação</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--amber);border-radius:2px;vertical-align:-1px"></span> % No prazo (OTD)</span></div></div></div>
    <div class="card"><div class="hd"><h3>Nível de serviço acumulado</h3><span class="tag">${gMonth.label}</span></div><div class="bd" style="text-align:center">${gaugeSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos no mês</div></div></div>
   </div>
  </section>
@@ -323,6 +326,7 @@ function onWkDate(which){const elIni=document.getElementById('wkIni'),elFim=docu
  if(Math.round((new Date(fim+'T00:00:00')-new Date(ini+'T00:00:00'))/86400000)+1>7){if(which==='ini')fim=shiftDate(ini,6);else ini=shiftDate(fim,-6);}
  if(wkMin&&ini<wkMin)ini=wkMin;if(wkMax&&fim>wkMax)fim=wkMax;
  chartState.ini=ini;chartState.fim=fim;render();}
+function onWkPlaChange(){chartState.pla=v('wkPla');render();}
 function clearWkDate(){chartState.ini='';chartState.fim='';render();}
 function clearFilters(){FKEYS.forEach(([k])=>state[k].clear());state.ini='';state.fim='';buildFilters();render();}
 function openBase(){document.getElementById('ovlBase').classList.add('show');renderBase('');}
