@@ -50,6 +50,10 @@ h1,h2,h3{font-family:Archivo,sans-serif;margin:0}button{font-family:inherit;curs
 .card .hd{padding:11px 15px 9px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px}
 .card .hd h3{font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2)}
 .card .hd .tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--line2);padding:2px 7px;border-radius:20px}
+.hd .rangepick{display:flex;align-items:center;gap:4px;margin-left:10px}
+.hd .rangepick input{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 6px;font-size:10.5px;font-family:inherit;color:var(--text);height:22px}
+.hd .rangepick span{font-size:10px;color:var(--muted)}
+.hd .rangepick button{border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:0 7px;height:22px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer}
 .card .bd{padding:13px 15px}
 .kpi{padding:15px 16px}.kpi .k-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
 .kpi .k-val{font-family:"JetBrains Mono";font-weight:700;font-size:34px;line-height:1.05;margin-top:6px;letter-spacing:-1px}
@@ -144,6 +148,7 @@ const EPOCH=new Date(2026,0,1);
 let DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]}, ROWS=[], GEN='—';
 let LOJAS=[]; try{LOJAS=JSON.parse(localStorage.getItem('lojasBase')||'[]')}catch(e){}
 const state={reg:new Set(),fil:new Set(),dis:new Set(),coo:new Set(),dir:new Set(),pla:new Set(),mod:new Set(),grp:new Set(),ini:'',fim:''};
+const chartState={ini:'',fim:''};
 const FKEYS=[['reg','Regional','REG',C.REG],['fil','Filial','FIL',C.FIL],['dis','Distrital','DIS',C.DIS],['coo','Coordenador','COO',C.COO],['dir','Diretor','DIR',C.DIR],['pla','Plataforma','PLA',C.PLA],['mod','Modalidade','MOD',C.MOD],['grp','Grupo entrega','GRP',C.GRP]];
 const fmtInt=n=>Math.round(n).toLocaleString('pt-BR');
 const pct=(a,b)=>b?a/b:0;
@@ -172,8 +177,8 @@ function activeRows(){const{reg,fil,dis,coo,dir,pla,mod,grp,ini,fim}=state;
   if(iniM!=null||fimM!=null){const cm=r[C.CRIA];if(cm<0)continue;if(iniM!=null&&cm<iniM)continue;if(fimM!=null&&cm>=fimM)continue;}
   out.push(r);}return out;}
 function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os=0,onp=0,rss=0,rsn=0,ts=0,tn=0,ss=0,sn=0,cs=0,cn=0,es=0,en=0;
- const fA={},frs={},frn={},pA={},pS={},pN={},coord={},dist={},sj={n:0,np:0,at:0,ss:0,sn:0};let mS=0,mE=0;
- const Df=DICTS.FIL,Dp=DICTS.PLA,Dco=DICTS.COO,Ddi=DICTS.DIS;
+ const fA={},frs={},frn={},pA={},pS={},pN={},coord={},dist={},modo={},sj={n:0,np:0,at:0,ss:0,sn:0};let mS=0,mE=0;
+ const Df=DICTS.FIL,Dp=DICTS.PLA,Dco=DICTS.COO,Ddi=DICTS.DIS,Dmo=DICTS.MOD;
  for(const r of rows){m.sucessos++;const a=r[C.ST]===1,np=r[C.ST]===0;if(np)m.noprazo++;if(a)m.atraso++;
   if(r[C.GRP]===1){us++;if(np)unp++;}else{os++;if(np)onp++;}
   if(r[C.RAP]===1&&r[C.TSEP]>=0){rss+=r[C.TSEP];rsn++;}
@@ -183,6 +188,7 @@ function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os
   const p=r[C.PLA];pN[p]=(pN[p]||0)+1;if(a)pA[p]=(pA[p]||0)+1;pS[p]=(pS[p]||0)+1;
   const ck=r[C.COO];(coord[ck]=coord[ck]||{n:0,np:0,at:0}).n++;if(np)coord[ck].np++;if(a)coord[ck].at++;
   const dk=r[C.DIS];(dist[dk]=dist[dk]||{n:0,np:0,at:0}).n++;if(np)dist[dk].np++;if(a)dist[dk].at++;
+  const mk=r[C.MOD];(modo[mk]=modo[mk]||{n:0,np:0,at:0}).n++;if(np)modo[mk].np++;if(a)modo[mk].at++;
   if(a){if(r[C.SEP]===1)mS++;else mE++;}
   if(r[C.RSJ]===1){sj.n++;if(np)sj.np++;if(a)sj.at++;if(r[C.TSEP]>=0){sj.ss+=r[C.TSEP];sj.sn++;}}}
  m.slaGeral=pct(m.noprazo,m.sucessos);m.slaU=pct(unp,us);m.u_s=us;m.u_np=unp;m.u_at=us-unp;m.slaO=pct(onp,os);m.o_s=os;m.o_np=onp;m.o_at=os-onp;
@@ -193,6 +199,7 @@ function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os
  m.platAtr=Object.keys(pN).map(p=>({nm:Dp[p],atr:pA[p]||0,suc:pS[p]||0})).sort((a,b)=>b.atr-a.atr);
  m.coord=Object.keys(coord).map(k=>({nm:Dco[k],...coord[k],sla:pct(coord[k].np,coord[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
  m.dist=Object.keys(dist).map(k=>({nm:Ddi[k],...dist[k],sla:pct(dist[k].np,dist[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
+ m.mod=Object.keys(modo).map(k=>({nm:Dmo[k],...modo[k],sla:pct(modo[k].np,modo[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>b.n-a.n);
  return m;}
 function computeSuspect(rows){const De=DICTS.ENT,Dp=DICTS.PLA,Df=DICTS.FIL,byday={};
  for(const r of rows){const cm=r[C.CHEG];if(cm<0)continue;const nm=De[r[C.ENT]];if(!nm||nm==='—')continue;const k=r[C.ENT]+'|'+dateStr(minToDate(cm));(byday[k]=byday[k]||{ent:r[C.ENT],times:[],pla:{},fil:{}});byday[k].times.push(cm);byday[k].pla[Dp[r[C.PLA]]]=1;const fn=Df[r[C.FIL]];if(fn&&fn!=='—')byday[k].fil[fn]=(byday[k].fil[fn]||0)+1;}
@@ -234,6 +241,9 @@ function render(){
  const rows=activeRows(),m=compute(rows),susp=computeSuspect(rows);
  const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML=`<b>${fmtInt(m.sucessos)}</b> pedidos no filtro`;
  const maxSuc=Math.max(1,...m.platAtr.map(x=>x.suc));const platSuc=m.platAtr.slice().sort((a,b)=>b.suc-a.suc);
+ const wkFull=weeklyRapida(rows);const wkMin=wkFull.length?wkFull[0].d:'';const wkMax=wkFull.length?wkFull[wkFull.length-1].d:'';
+ const wkFrom=chartState.ini||wkMin,wkTo=chartState.fim||wkMax;
+ const wkSeries=wkFull.filter(s=>(!wkFrom||s.d>=wkFrom)&&(!wkTo||s.d<=wkTo));
  document.getElementById('board').innerHTML=`
  <section class="slide" data-slide="Indicadores gerais"><div class="sechd"><span class="n">1</span><h2>Indicadores gerais</h2><div class="rule"></div></div>
   <div class="grid cols-3">
@@ -256,10 +266,11 @@ function render(){
   <div style="height:16px"></div>
   <div class="grid cols-2">
    <div class="card"><div class="hd"><h3>Sucessos entregues por plataforma</h3></div><div class="bd" style="padding:4px 6px"><table><thead><tr><th>Plataforma</th><th class="num">Entregues</th><th style="width:90px"></th><th class="num">SLA</th></tr></thead><tbody>${platSuc.map(x=>{const s=pct(x.suc-x.atr,x.suc);return `<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.suc)}</td><td>${miniBar(x.suc,maxSuc,'var(--accent)')}</td><td class="num"><span class="pill ${pillClass(s)}">${fmtPct(s)}</span></td></tr>`;}).join('')}</tbody></table></div></div>
-   <div class="card"><div class="hd"><h3>Provável motivo de atraso</h3></div><div class="bd">${statRow('Falha na Separação',`${fmtInt(m.motSep)} · ${m.atraso?fmtPct(m.motSep/m.atraso):'—'}`)}${statRow('Falha na Entrega',`${fmtInt(m.motEnt)} · ${m.atraso?fmtPct(m.motEnt/m.atraso):'—'}`)}<div style="font-size:11px;color:var(--muted);margin-top:8px">Separação = atraso já na loja (sep. &gt; 15 min). Entrega = após a coleta.</div></div></div>
+   <div class="card"><div class="hd"><h3>Provável motivo de atraso</h3></div><div class="bd">${statRow('Falha na Separação',`${fmtInt(m.motSep)} · ${m.atraso?fmtPct(m.motSep/m.atraso):'—'}`)}${statRow('Falha na Entrega',`${fmtInt(m.motEnt)} · ${m.atraso?fmtPct(m.motEnt/m.atraso):'—'}`)}<div style="font-size:11px;color:var(--muted);margin-top:8px">Separação = atraso já na loja (sep. &gt; 15 min). Entrega = após a coleta.</div>
+   <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line2)"><div style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2);margin-bottom:4px">Nível de serviço por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Ped.</th><th class="num">NS</th></tr></thead><tbody>${m.mod.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Sem dados no filtro</td></tr>'}</tbody></table></div></div></div>
   </div>
   <div style="height:16px"></div>
-  <div class="card"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span></div><div class="bd">${chartRapida(weeklyRapida(rows))}<div style="display:flex;gap:20px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--ink2);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:16px;height:3px;background:var(--red);vertical-align:3px"></span> OTD / SLA (%)</span></div></div></div>
+  <div class="card"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate()"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate()"><button type="button" onclick="clearWkDate()">Tudo</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:20px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--ink2);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:16px;height:3px;background:var(--red);vertical-align:3px"></span> OTD / SLA (%)</span></div></div></div>
  </section>
  <section class="slide" data-slide="Grupos de entrega"><div class="sechd"><span class="n">3</span><h2>Grupos de entrega</h2><div class="rule"></div></div>
   <div class="grid cols-3">${statusCard('Status Uber + 99',m.u_s,m.u_np,m.u_at,m.slaU)}${statusCard('Status Terceirizados (resto)',m.o_s,m.o_np,m.o_at,m.slaO)}
@@ -286,6 +297,8 @@ function msToggle(k,val,on){if(on)state[k].add(val);else state[k].delete(val);ms
 function msClear(k){state[k].clear();document.querySelectorAll('#ms-list-'+k+' input').forEach(i=>i.checked=false);msRender();render();}
 function msFilter(k,q){q=(q||'').toLowerCase().trim();const list=document.getElementById('ms-list-'+k),hint=document.getElementById('ms-hint-'+k),lazy=list.dataset.lazy==='1';let shown=0;list.querySelectorAll('.ms-opt').forEach(o=>{const checked=o.querySelector('input').checked,txt=o.textContent.toLowerCase();const vis=(lazy&&!q)?checked:txt.includes(q);o.style.display=vis?'':'none';if(vis)shown++;});if(hint)hint.style.display=(lazy&&!q)?'block':'none';}
 function onDate(){state.ini=v('fIni');state.fim=v('fFim');render();}
+function onWkDate(){chartState.ini=v('wkIni');chartState.fim=v('wkFim');render();}
+function clearWkDate(){chartState.ini='';chartState.fim='';render();}
 function clearFilters(){FKEYS.forEach(([k])=>state[k].clear());state.ini='';state.fim='';buildFilters();render();}
 function openBase(){document.getElementById('ovlBase').classList.add('show');renderBase('');}
 function renderBase(q){q=(q||'').toLowerCase();const rows=LOJAS.filter(l=>!q||String(l.cod).includes(q)||String(l.filial||'').toLowerCase().includes(q)).slice(0,400);
