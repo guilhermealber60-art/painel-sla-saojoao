@@ -159,6 +159,7 @@ const slaColor=x=>x>=.9?'var(--green)':x>=.8?'var(--amber)':'var(--red)';
 const pillClass=x=>x>=.9?'g':x>=.8?'a':'r';
 const minToDate=m=>m<0?null:new Date(EPOCH.getTime()+m*60000);
 const dateStr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const shiftDate=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return dateStr(d);};
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function valOf(k,r){if(k==='grp')return r[C.GRP]===1?'Uber+99':'Outros';const map={reg:['REG',C.REG],fil:['FIL',C.FIL],dis:['DIS',C.DIS],coo:['COO',C.COO],dir:['DIR',C.DIR],pla:['PLA',C.PLA],mod:['MOD',C.MOD]}[k];return DICTS[map[0]][r[map[1]]];}
 function activeRows(){const{reg,fil,dis,coo,dir,pla,mod,grp,ini,fim}=state;
@@ -213,7 +214,6 @@ const kpi=(l,v,s,cls,ex)=>`<div class="card kpi ${cls}"><div class="k-label">${l
 const fnode=n=>`<div class="node"><div class="dot"></div><div class="nm">${n}</div></div>`;
 const fleg=(s,l)=>`<div class="leg"><div class="dur">${dur(s)}</div><div class="line"></div><div class="dl">${l}</div></div>`;
 const statRow=(l,v)=>`<div class="statrow"><span class="lb">${l}</span><span class="vl">${v}</span></div>`;
-const statusCard=(t,n,np,at,sla)=>`<div class="card"><div class="hd"><h3>${t}</h3><span class="tag">${fmtInt(n)} ped.</span></div><div class="bd">${statRow('Pedidos',fmtInt(n))}${statRow('No prazo',fmtInt(np))}${statRow('Atrasos',fmtInt(at))}${statRow('Nível de serviço',`<span class="pill ${pillClass(sla)}">${n?fmtPct(sla):'—'}</span>`)}${bar(sla,slaColor(sla))}</div></div>`;
 const table3=(hs,b)=>`<table><thead><tr>${hs.map((h,i)=>`<th class="${i>=2?'num':''}" ${i===0?'style="width:32px"':''}>${h}</th>`).join('')}</tr></thead><tbody>${b.join('')||`<tr><td colspan="${hs.length}" class="empty">Sem dados no filtro</td></tr>`}</tbody></table>`;
 function slaTable(title,arr){const b=arr.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.at)}</td><td class="num" style="width:80px">${miniBar(x.sla,1,slaColor(x.sla))}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${fmtPct(x.sla)}</span></td></tr>`).join('');
  return `<div class="card"><div class="hd"><h3>${title}</h3><span class="tag">${arr.length}</span></div><div class="scroll" style="padding:2px 6px"><table><thead><tr><th>${title.includes('Coordenador')?'Coordenador':'Distrital'}</th><th class="num">Ped.</th><th class="num">No prazo</th><th class="num">Atrasos</th><th></th><th class="num">NS</th></tr></thead><tbody>${b||`<tr><td colspan="6" class="empty">Sem dados</td></tr>`}</tbody></table></div></div>`;}
@@ -225,7 +225,7 @@ function weeklyRapida(rows){const by={};for(const r of rows){if(r[C.RAP]!==1)con
  return Object.keys(by).sort().map(d=>({d,sepMin:by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d].tot?by[d].np/by[d].tot:null,n:by[d].tot}));}
 function chartRapida(series){
  if(!series.length)return '<div class="empty">Sem pedidos de Entrega Rápida no filtro atual.</div>';
- const W=760,H=290,ml=42,mr=42,mt=22,mb=52,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(46,step*0.55);
+ const W=760,H=145,ml=42,mr=42,mt=18,mb=34,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(46,step*0.55);
  const maxSep=Math.max(10,...series.map(s=>s.sepMin||0)),sepTop=Math.ceil(maxSep/5)*5;
  const x=i=>ml+step*i+step/2,ySla=v=>mt+ih-v*ih;
  let grid='';for(let g=0;g<=5;g++){const yy=mt+ih*(g/5);grid+=`<line x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}" stroke="var(--line2)"/><text x="${ml-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(sepTop*(1-g/5))}</text><text x="${W-mr+6}" y="${(yy+3).toFixed(1)}" font-size="9" fill="var(--muted)">${Math.round(100*(1-g/5))}%</text>`;}
@@ -242,7 +242,8 @@ function render(){
  const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML=`<b>${fmtInt(m.sucessos)}</b> pedidos no filtro`;
  const maxSuc=Math.max(1,...m.platAtr.map(x=>x.suc));const platSuc=m.platAtr.slice().sort((a,b)=>b.suc-a.suc);
  const wkFull=weeklyRapida(rows);const wkMin=wkFull.length?wkFull[0].d:'';const wkMax=wkFull.length?wkFull[wkFull.length-1].d:'';
- const wkFrom=chartState.ini||wkMin,wkTo=chartState.fim||wkMax;
+ const wkDefFrom=wkMax?(shiftDate(wkMax,-6)<wkMin?wkMin:shiftDate(wkMax,-6)):wkMin;
+ const wkFrom=chartState.ini||wkDefFrom,wkTo=chartState.fim||wkMax;
  const wkSeries=wkFull.filter(s=>(!wkFrom||s.d>=wkFrom)&&(!wkTo||s.d<=wkTo));
  document.getElementById('board').innerHTML=`
  <section class="slide" data-slide="Indicadores gerais"><div class="sechd"><span class="n">1</span><h2>Indicadores gerais</h2><div class="rule"></div></div>
@@ -270,16 +271,12 @@ function render(){
    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line2)"><div style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2);margin-bottom:4px">Nível de serviço por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Ped.</th><th class="num">NS</th></tr></thead><tbody>${m.mod.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Sem dados no filtro</td></tr>'}</tbody></table></div></div></div>
   </div>
   <div style="height:16px"></div>
-  <div class="card"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate()"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate()"><button type="button" onclick="clearWkDate()">Tudo</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:20px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--ink2);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:16px;height:3px;background:var(--red);vertical-align:3px"></span> OTD / SLA (%)</span></div></div></div>
+  <div class="card"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">Últimos 7 dias</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:20px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--ink2);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:16px;height:3px;background:var(--red);vertical-align:3px"></span> OTD / SLA (%)</span></div></div></div>
  </section>
- <section class="slide" data-slide="Grupos de entrega"><div class="sechd"><span class="n">3</span><h2>Grupos de entrega</h2><div class="rule"></div></div>
-  <div class="grid cols-3">${statusCard('Status Uber + 99',m.u_s,m.u_np,m.u_at,m.slaU)}${statusCard('Status Terceirizados (resto)',m.o_s,m.o_np,m.o_at,m.slaO)}
-   <div class="card"><div class="hd"><h3>Atrasos vs No prazo</h3></div><div class="bd">${statRow('Total sucessos',fmtInt(m.sucessos))}${statRow('No prazo',`${fmtInt(m.noprazo)} · ${fmtPct(m.slaGeral)}`)}${statRow('Atrasos',`${fmtInt(m.atraso)} · ${fmtPct(1-m.slaGeral)}`)}${bar(m.slaGeral,slaColor(m.slaGeral))}</div></div></div>
- </section>
- <section class="slide" data-slide="Nivel de servico por gestor"><div class="sechd"><span class="n">4</span><h2>Nível de serviço por gestor</h2><div class="rule"></div></div>
+ <section class="slide" data-slide="Nivel de servico por gestor"><div class="sechd"><span class="n">3</span><h2>Nível de serviço por gestor</h2><div class="rule"></div></div>
   <div class="grid cols-2">${slaTable('Nível de serviço por Coordenador',m.coord)}${slaTable('Nível de serviço por Distrital',m.dist)}</div>
  </section>
- <section class="slide" data-slide="Possiveis finalizacoes erradas"><div class="sechd"><span class="n">5</span><h2>Possíveis finalizações erradas</h2><div class="rule"></div></div>${renderSuspect(susp)}</section>`;
+ <section class="slide" data-slide="Possiveis finalizacoes erradas"><div class="sechd"><span class="n">4</span><h2>Possíveis finalizações erradas</h2><div class="rule"></div></div>${renderSuspect(susp)}</section>`;
  window.__last={m,susp};
 }
 function optionsFor(k){if(k==='grp')return ['Uber+99','Outros'];const m={reg:'REG',fil:'FIL',dis:'DIS',coo:'COO',dir:'DIR',pla:'PLA',mod:'MOD'}[k],col={REG:C.REG,FIL:C.FIL,DIS:C.DIS,COO:C.COO,DIR:C.DIR,PLA:C.PLA,MOD:C.MOD}[m];const s=new Set(),D=DICTS[m];for(const r of ROWS){const v=D[r[col]];if(v&&v!=='—')s.add(v);}return [...s].sort((a,b)=>a.localeCompare(b,'pt-BR'));}
@@ -297,7 +294,11 @@ function msToggle(k,val,on){if(on)state[k].add(val);else state[k].delete(val);ms
 function msClear(k){state[k].clear();document.querySelectorAll('#ms-list-'+k+' input').forEach(i=>i.checked=false);msRender();render();}
 function msFilter(k,q){q=(q||'').toLowerCase().trim();const list=document.getElementById('ms-list-'+k),hint=document.getElementById('ms-hint-'+k),lazy=list.dataset.lazy==='1';let shown=0;list.querySelectorAll('.ms-opt').forEach(o=>{const checked=o.querySelector('input').checked,txt=o.textContent.toLowerCase();const vis=(lazy&&!q)?checked:txt.includes(q);o.style.display=vis?'':'none';if(vis)shown++;});if(hint)hint.style.display=(lazy&&!q)?'block':'none';}
 function onDate(){state.ini=v('fIni');state.fim=v('fFim');render();}
-function onWkDate(){chartState.ini=v('wkIni');chartState.fim=v('wkFim');render();}
+function onWkDate(which){const elIni=document.getElementById('wkIni'),elFim=document.getElementById('wkFim');let ini=elIni.value,fim=elFim.value;const wkMin=elIni.min,wkMax=elIni.max;
+ if(fim<ini){if(which==='ini')fim=ini;else ini=fim;}
+ if(Math.round((new Date(fim+'T00:00:00')-new Date(ini+'T00:00:00'))/86400000)+1>7){if(which==='ini')fim=shiftDate(ini,6);else ini=shiftDate(fim,-6);}
+ if(wkMin&&ini<wkMin)ini=wkMin;if(wkMax&&fim>wkMax)fim=wkMax;
+ chartState.ini=ini;chartState.fim=fim;render();}
 function clearWkDate(){chartState.ini='';chartState.fim='';render();}
 function clearFilters(){FKEYS.forEach(([k])=>state[k].clear());state.ini='';state.fim='';buildFilters();render();}
 function openBase(){document.getElementById('ovlBase').classList.add('show');renderBase('');}
