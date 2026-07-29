@@ -225,23 +225,37 @@ function weeklyRapida(rows){const by={};for(const r of rows){if(r[C.RAP]!==1)con
  return Object.keys(by).sort().map(d=>({d,sepMin:by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d].tot?by[d].np/by[d].tot:null,n:by[d].tot}));}
 function chartRapida(series){
  if(!series.length)return '<div class="empty">Sem pedidos de Entrega Rápida no filtro atual.</div>';
- const W=760,H=145,ml=42,mr=16,mt=30,mb=34,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(46,step*0.55);
- const maxSep=Math.max(10,...series.map(s=>s.sepMin||0)),sepTop=Math.ceil(maxSep/5)*5;
- const x=i=>ml+step*i+step/2,rBot=Math.min(10,bw/2);
- let grid='';for(let g=0;g<=5;g++){const yy=mt+ih*(g/5);grid+=`<line x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}" stroke="var(--line2)" stroke-dasharray="3,3"/><text x="${ml-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(sepTop*(1-g/5))}</text>`;}
- let defs='',bars='',labels='';
- series.forEach((s,i)=>{const cx=x(i),xL=cx-bw/2,xR=cx+bw/2,yTop=mt,yBot=mt+ih,clipId=`wkclip${i}`;
-  const shape=`M${xL.toFixed(1)},${yTop.toFixed(1)} L${xR.toFixed(1)},${yTop.toFixed(1)} L${xR.toFixed(1)},${(yBot-rBot).toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${(xR-rBot).toFixed(1)},${yBot.toFixed(1)} L${(xL+rBot).toFixed(1)},${yBot.toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${xL.toFixed(1)},${(yBot-rBot).toFixed(1)} Z`;
-  defs+=`<clipPath id="${clipId}"><path d="${shape}"/></clipPath>`;
-  const hSep=s.sepMin!=null?(s.sepMin/sepTop)*ih:0,ySplit=yBot-hSep;
-  const segColor=s.sepMin!=null?(s.sepMin<=15?'var(--green)':'var(--red)'):null;
-  const amp1=(4*Math.sin(i*2.1)).toFixed(1),amp2=(4*Math.sin(i*2.1+1.4)).toFixed(1);
-  const liquid=segColor?`<path d="M${xL.toFixed(1)},${yBot.toFixed(1)} L${xL.toFixed(1)},${ySplit.toFixed(1)} C${(xL+bw*0.33).toFixed(1)},${(ySplit+ +amp1).toFixed(1)} ${(xL+bw*0.66).toFixed(1)},${(ySplit+ +amp2).toFixed(1)} ${xR.toFixed(1)},${ySplit.toFixed(1)} L${xR.toFixed(1)},${yBot.toFixed(1)} Z" fill="${segColor}"/>`:'';
-  bars+=`<g clip-path="url(#${clipId})"><rect x="${xL.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${ih.toFixed(1)}" fill="var(--accent)"/>${liquid}</g>`;
-  if(s.sepMin!=null)labels+=`<text x="${cx.toFixed(1)}" y="${Math.min(ySplit+hSep/2+3,yBot-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${s.sepMin.toFixed(1).replace('.',',')}min</text>`;
-  if(s.sla!=null)labels+=`<text x="${cx.toFixed(1)}" y="${(mt-9).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--red)">${Math.round(s.sla*100)}%</text>`;
-  labels+=`<text x="${cx.toFixed(1)}" y="${(H-mb+18)}" text-anchor="middle" font-size="10" fill="var(--muted)">${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
- return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter"><defs>${defs}</defs><text x="${ml}" y="9" font-size="9" fill="var(--muted)">min separação</text>${grid}${bars}${labels}</svg>`;}
+ const W=360,H=175,ml=22,mr=10,mt=26,mb=48,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(30,step*0.55);
+ const x=i=>ml+step*i+step/2;
+ let bars='',labels='';
+ series.forEach((s,i)=>{const cx=x(i),sla=s.sla||0,h=sla*ih,y=mt+ih-h;
+  bars+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="var(--amber)"/>`;
+  labels+=`<text x="${cx.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${s.n?slaColor(sla):'var(--muted)'}">${s.n?fmtPct(sla):'—'}</text>`;
+  if(s.sepMin!=null)labels+=`<text x="${cx.toFixed(1)}" y="${(mt+ih+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)"><tspan fill="var(--green)">■</tspan> ${s.sepMin.toFixed(1).replace('.',',')}min</text>`;
+  labels+=`<text x="${cx.toFixed(1)}" y="${(mt+ih+28).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)">${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
+ return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter">${bars}${labels}</svg>`;}
+function monthRange(){const now=new Date(),y=now.getFullYear(),mo=now.getMonth();
+ const startMin=Math.floor((new Date(y,mo,1)-EPOCH)/60000),endMin=Math.floor((new Date(y,mo+1,1)-EPOCH)/60000);
+ let label=now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});label=label.charAt(0).toUpperCase()+label.slice(1);
+ return {startMin,endMin,label};}
+function computeMonthSLA(){const {startMin,endMin,label}=monthRange();let suc=0,np=0,at=0,ss=0,sn=0;
+ for(const r of ROWS){const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)continue;suc++;if(r[C.ST]===0)np++;else if(r[C.ST]===1)at++;if(r[C.RAP]===1&&r[C.TSEP]>=0){ss+=r[C.TSEP];sn++;}}
+ return {suc,np,at,sla:pct(np,suc),avgSep:sn?ss/sn:null,label};}
+function gaugeSLA(g){
+ if(!g.suc)return '<div class="empty">Sem pedidos no mês atual.</div>';
+ const W=360,H=175,cx=W/2,cy=128,r=92,T=24;
+ const pol=ang=>{const a=(ang-90)*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+ const arc=(a0,a1)=>{const[x1,y1]=pol(a0),[x2,y2]=pol(a1),large=(a1-a0)<=180?0:1;return `M${x1.toFixed(1)},${y1.toFixed(1)} A${r.toFixed(1)},${r.toFixed(1)} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)}`;};
+ const split=-90+180*g.sla,[lx,ly]=pol(-90),[rx,ry]=pol(90);
+ return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter">
+  <path d="${arc(-90,split)}" fill="none" stroke="var(--green)" stroke-width="${T}" stroke-linecap="round"/>
+  <path d="${arc(split,90)}" fill="none" stroke="var(--red)" stroke-width="${T}" stroke-linecap="round"/>
+  <text x="${lx.toFixed(1)}" y="${(ly-10).toFixed(1)}" text-anchor="start" font-size="13" font-weight="700" fill="var(--green)">${fmtPct(g.sla)}</text>
+  <text x="${rx.toFixed(1)}" y="${(ry-10).toFixed(1)}" text-anchor="end" font-size="13" font-weight="700" fill="var(--red)">${fmtPct(1-g.sla)}</text>
+  <text x="${cx}" y="${cy-16}" text-anchor="middle" font-size="28" font-weight="800" fill="var(--ink2)">${fmtPct(g.sla)}</text>
+  <text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="11" fill="var(--muted)">nível de serviço</text>
+  <text x="${cx}" y="${H-14}" text-anchor="middle" font-size="11.5" fill="var(--muted)">Média de separação (rápida): <tspan font-weight="700" fill="var(--ink2)">${dur(g.avgSep)}</tspan></text>
+ </svg>`;}
 function render(){
  if(!ROWS.length){document.getElementById('board').innerHTML=`<div class="bigempty"><h2>Nenhum dado carregado</h2><p>Clique em <b>Atualizar dados</b> e envie os 3 arquivos do dia (VTEX Report, Abbiamo ORDERS e EVENTS) e, uma vez, a base de gestores (aba Lojas em CSV).</p><button class="btn primary" onclick="openUpload()">Atualizar dados</button></div>`;const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML='';return;}
  const rows=activeRows(),m=compute(rows),susp=computeSuspect(rows);
@@ -251,6 +265,7 @@ function render(){
  const wkDefFrom=wkMax?(shiftDate(wkMax,-6)<wkMin?wkMin:shiftDate(wkMax,-6)):wkMin;
  const wkFrom=chartState.ini||wkDefFrom,wkTo=chartState.fim||wkMax;
  const wkSeries=wkFull.filter(s=>(!wkFrom||s.d>=wkFrom)&&(!wkTo||s.d<=wkTo));
+ const gMonth=computeMonthSLA();
  document.getElementById('board').innerHTML=`
  <section class="slide" data-slide="Indicadores gerais"><div class="sechd"><span class="n">1</span><h2>Indicadores gerais</h2><div class="rule"></div></div>
   <div class="grid cols-3">
@@ -277,7 +292,10 @@ function render(){
    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line2)"><div style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2);margin-bottom:4px">Nível de serviço por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Ped.</th><th class="num">NS</th></tr></thead><tbody>${m.mod.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Sem dados no filtro</td></tr>'}</tbody></table></div></div></div>
   </div>
   <div style="height:16px"></div>
-  <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">Últimos 7 dias</button><button type="button" onclick="exportChartImg()">Exportar imagem</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Separação ≤ 15min</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> Separação &gt; 15min</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--accent);border-radius:2px;vertical-align:-1px"></span> SLA (resto da barra)</span><span style="color:var(--red);font-weight:700">% no topo = OTD / SLA do dia</span></div></div></div>
+  <div class="grid cols-2">
+   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD (Entrega Rápida)</h3><span class="tag">exc. São João</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Média de Separação</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--amber);border-radius:2px;vertical-align:-1px"></span> % No prazo (OTD)</span></div></div></div>
+   <div class="card"><div class="hd"><h3>Nível de serviço acumulado</h3><span class="tag">${gMonth.label}</span></div><div class="bd" style="text-align:center">${gaugeSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos no mês</div></div></div>
+  </div>
  </section>
  <section class="slide" data-slide="Nivel de servico por gestor"><div class="sechd"><span class="n">3</span><h2>Nível de serviço por gestor</h2><div class="rule"></div></div>
   <div class="grid cols-2">${slaTable('Nível de serviço por Coordenador',m.coord)}${slaTable('Nível de serviço por Distrital',m.dist)}</div>
