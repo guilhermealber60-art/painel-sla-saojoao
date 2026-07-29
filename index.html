@@ -227,17 +227,21 @@ function chartRapida(series){
  if(!series.length)return '<div class="empty">Sem pedidos de Entrega Rápida no filtro atual.</div>';
  const W=760,H=145,ml=42,mr=16,mt=24,mb=34,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(46,step*0.55);
  const maxSep=Math.max(10,...series.map(s=>s.sepMin||0)),sepTop=Math.ceil(maxSep/5)*5;
- const x=i=>ml+step*i+step/2;
- let grid='';for(let g=0;g<=5;g++){const yy=mt+ih*(g/5);grid+=`<line x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}" stroke="var(--line2)"/><text x="${ml-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(sepTop*(1-g/5))}</text>`;}
- let bars='',labels='';
- series.forEach((s,i)=>{const cx=x(i),xL=(cx-bw/2).toFixed(1);
-  const hSep=s.sepMin!=null?(s.sepMin/sepTop)*ih:0,ySplit=mt+ih-hSep;
-  if(hSep<ih)bars+=`<rect x="${xL}" y="${mt.toFixed(1)}" width="${bw.toFixed(1)}" height="${(ySplit-mt).toFixed(1)}" rx="3" fill="var(--accent)"/>`;
-  if(hSep>0){const segColor=s.sepMin<=15?'var(--green)':'var(--red)';bars+=`<rect x="${xL}" y="${ySplit.toFixed(1)}" width="${bw.toFixed(1)}" height="${hSep.toFixed(1)}" rx="3" fill="${segColor}"/>`;}
-  if(s.sepMin!=null)labels+=`<text x="${cx.toFixed(1)}" y="${Math.min(ySplit+hSep/2+3,mt+ih-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${s.sepMin.toFixed(1).replace('.',',')}min</text>`;
+ const x=i=>ml+step*i+step/2,rTop=bw/2,rBot=Math.min(10,bw/2);
+ let grid='';for(let g=0;g<=5;g++){const yy=mt+ih*(g/5);grid+=`<line x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}" stroke="var(--line2)" stroke-dasharray="3,3"/><text x="${ml-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(sepTop*(1-g/5))}</text>`;}
+ let defs='',bars='',labels='';
+ series.forEach((s,i)=>{const cx=x(i),xL=cx-bw/2,xR=cx+bw/2,yTop=mt,yBot=mt+ih,clipId=`wkclip${i}`;
+  const shape=`M${xL.toFixed(1)},${(yTop+rTop).toFixed(1)} A${rTop.toFixed(1)},${rTop.toFixed(1)} 0 0 1 ${xR.toFixed(1)},${(yTop+rTop).toFixed(1)} L${xR.toFixed(1)},${(yBot-rBot).toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${(xR-rBot).toFixed(1)},${yBot.toFixed(1)} L${(xL+rBot).toFixed(1)},${yBot.toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${xL.toFixed(1)},${(yBot-rBot).toFixed(1)} Z`;
+  defs+=`<clipPath id="${clipId}"><path d="${shape}"/></clipPath>`;
+  const hSep=s.sepMin!=null?(s.sepMin/sepTop)*ih:0,ySplit=yBot-hSep;
+  const segColor=s.sepMin!=null?(s.sepMin<=15?'var(--green)':'var(--red)'):null;
+  const amp1=(4*Math.sin(i*2.1)).toFixed(1),amp2=(4*Math.sin(i*2.1+1.4)).toFixed(1);
+  const liquid=segColor?`<path d="M${xL.toFixed(1)},${yBot.toFixed(1)} L${xL.toFixed(1)},${ySplit.toFixed(1)} C${(xL+bw*0.33).toFixed(1)},${(ySplit+ +amp1).toFixed(1)} ${(xL+bw*0.66).toFixed(1)},${(ySplit+ +amp2).toFixed(1)} ${xR.toFixed(1)},${ySplit.toFixed(1)} L${xR.toFixed(1)},${yBot.toFixed(1)} Z" fill="${segColor}"/>`:'';
+  bars+=`<g clip-path="url(#${clipId})"><rect x="${xL.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${ih.toFixed(1)}" fill="var(--accent)"/>${liquid}</g>`;
+  if(s.sepMin!=null)labels+=`<text x="${cx.toFixed(1)}" y="${Math.min(ySplit+hSep/2+3,yBot-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${s.sepMin.toFixed(1).replace('.',',')}min</text>`;
   if(s.sla!=null)labels+=`<text x="${cx.toFixed(1)}" y="${(mt-9).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--red)">${Math.round(s.sla*100)}%</text>`;
   labels+=`<text x="${cx.toFixed(1)}" y="${(H-mb+18)}" text-anchor="middle" font-size="10" fill="var(--muted)">${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
- return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter"><text x="${ml}" y="13" font-size="9" fill="var(--muted)">min separação</text>${grid}${bars}${labels}</svg>`;}
+ return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter"><defs>${defs}</defs><text x="${ml}" y="13" font-size="9" fill="var(--muted)">min separação</text>${grid}${bars}${labels}</svg>`;}
 function render(){
  if(!ROWS.length){document.getElementById('board').innerHTML=`<div class="bigempty"><h2>Nenhum dado carregado</h2><p>Clique em <b>Atualizar dados</b> e envie os 3 arquivos do dia (VTEX Report, Abbiamo ORDERS e EVENTS) e, uma vez, a base de gestores (aba Lojas em CSV).</p><button class="btn primary" onclick="openUpload()">Atualizar dados</button></div>`;const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML='';return;}
  const rows=activeRows(),m=compute(rows),susp=computeSuspect(rows);
@@ -273,7 +277,7 @@ function render(){
    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line2)"><div style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2);margin-bottom:4px">Nível de serviço por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Ped.</th><th class="num">NS</th></tr></thead><tbody>${m.mod.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Sem dados no filtro</td></tr>'}</tbody></table></div></div></div>
   </div>
   <div style="height:16px"></div>
-  <div class="card"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">Últimos 7 dias</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Separação ≤ 15min</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> Separação &gt; 15min</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--accent);border-radius:2px;vertical-align:-1px"></span> SLA (resto da barra)</span><span style="color:var(--red);font-weight:700">% no topo = OTD / SLA do dia</span></div></div></div>
+  <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — SLA e separação (Entrega Rápida)</h3><span class="tag">exc. São João · por dia</span><div class="rangepick"><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">Últimos 7 dias</button><button type="button" onclick="exportChartImg()">Exportar imagem</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Separação ≤ 15min</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> Separação &gt; 15min</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--accent);border-radius:2px;vertical-align:-1px"></span> SLA (resto da barra)</span><span style="color:var(--red);font-weight:700">% no topo = OTD / SLA do dia</span></div></div></div>
  </section>
  <section class="slide" data-slide="Nivel de servico por gestor"><div class="sechd"><span class="n">3</span><h2>Nível de serviço por gestor</h2><div class="rule"></div></div>
   <div class="grid cols-2">${slaTable('Nível de serviço por Coordenador',m.coord)}${slaTable('Nível de serviço por Distrital',m.dist)}</div>
@@ -362,6 +366,7 @@ function exportAtrasados(){if(!ROWS.length){toast('Carregue dados primeiro.');re
 async function exportSlides(){if(!ROWS.length){toast('Carregue dados primeiro.');return;}toast('Gerando imagens…');const sl=[...document.querySelectorAll('.slide')];
  for(let i=0;i<sl.length;i++){const cv=await html2canvas(sl[i],{scale:2,backgroundColor:'#EDEFF4',windowWidth:1560});const a=document.createElement('a');a.download=`Painel_SLA_slide${i+1}.png`;a.href=cv.toDataURL('image/png');a.click();await new Promise(r=>setTimeout(r,350));}
  toast('Imagens exportadas ('+sl.length+' slides).');}
+async function exportChartImg(){const el=document.getElementById('wkChartCard');if(!el){toast('Carregue dados primeiro.');return;}toast('Gerando imagem…');const cv=await html2canvas(el,{scale:2,backgroundColor:'#FFFFFF'});const a=document.createElement('a');a.download='Evolucao_semanal_SLA.png';a.href=cv.toDataURL('image/png');a.click();toast('Imagem exportada.');}
 function dl(name,text){const b=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
 const GH_OWNER='guilhermealber60-art',GH_REPO='painel-sla-saojoao',GH_BRANCH='main';
 const ghToken=()=>localStorage.getItem('ghToken')||'';
