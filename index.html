@@ -225,13 +225,13 @@ function weeklyRapida(rows){const by={};for(const r of rows){if(r[C.RAP]!==1)con
  return Object.keys(by).sort().map(d=>({d,sepMin:by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d].tot?by[d].np/by[d].tot:null,n:by[d].tot}));}
 function chartRapida(series){
  if(!series.length)return '<div class="empty">Sem pedidos de Entrega Rápida no filtro atual.</div>';
- const W=760,H=145,ml=42,mr=16,mt=24,mb=34,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(46,step*0.55);
+ const W=760,H=145,ml=42,mr=16,mt=30,mb=34,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(46,step*0.55);
  const maxSep=Math.max(10,...series.map(s=>s.sepMin||0)),sepTop=Math.ceil(maxSep/5)*5;
- const x=i=>ml+step*i+step/2,rTop=bw/2,rBot=Math.min(10,bw/2);
+ const x=i=>ml+step*i+step/2,rBot=Math.min(10,bw/2);
  let grid='';for(let g=0;g<=5;g++){const yy=mt+ih*(g/5);grid+=`<line x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}" stroke="var(--line2)" stroke-dasharray="3,3"/><text x="${ml-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(sepTop*(1-g/5))}</text>`;}
  let defs='',bars='',labels='';
  series.forEach((s,i)=>{const cx=x(i),xL=cx-bw/2,xR=cx+bw/2,yTop=mt,yBot=mt+ih,clipId=`wkclip${i}`;
-  const shape=`M${xL.toFixed(1)},${(yTop+rTop).toFixed(1)} A${rTop.toFixed(1)},${rTop.toFixed(1)} 0 0 1 ${xR.toFixed(1)},${(yTop+rTop).toFixed(1)} L${xR.toFixed(1)},${(yBot-rBot).toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${(xR-rBot).toFixed(1)},${yBot.toFixed(1)} L${(xL+rBot).toFixed(1)},${yBot.toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${xL.toFixed(1)},${(yBot-rBot).toFixed(1)} Z`;
+  const shape=`M${xL.toFixed(1)},${yTop.toFixed(1)} L${xR.toFixed(1)},${yTop.toFixed(1)} L${xR.toFixed(1)},${(yBot-rBot).toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${(xR-rBot).toFixed(1)},${yBot.toFixed(1)} L${(xL+rBot).toFixed(1)},${yBot.toFixed(1)} A${rBot.toFixed(1)},${rBot.toFixed(1)} 0 0 1 ${xL.toFixed(1)},${(yBot-rBot).toFixed(1)} Z`;
   defs+=`<clipPath id="${clipId}"><path d="${shape}"/></clipPath>`;
   const hSep=s.sepMin!=null?(s.sepMin/sepTop)*ih:0,ySplit=yBot-hSep;
   const segColor=s.sepMin!=null?(s.sepMin<=15?'var(--green)':'var(--red)'):null;
@@ -241,7 +241,7 @@ function chartRapida(series){
   if(s.sepMin!=null)labels+=`<text x="${cx.toFixed(1)}" y="${Math.min(ySplit+hSep/2+3,yBot-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${s.sepMin.toFixed(1).replace('.',',')}min</text>`;
   if(s.sla!=null)labels+=`<text x="${cx.toFixed(1)}" y="${(mt-9).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--red)">${Math.round(s.sla*100)}%</text>`;
   labels+=`<text x="${cx.toFixed(1)}" y="${(H-mb+18)}" text-anchor="middle" font-size="10" fill="var(--muted)">${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
- return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter"><defs>${defs}</defs><text x="${ml}" y="13" font-size="9" fill="var(--muted)">min separação</text>${grid}${bars}${labels}</svg>`;}
+ return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter"><defs>${defs}</defs><text x="${ml}" y="9" font-size="9" fill="var(--muted)">min separação</text>${grid}${bars}${labels}</svg>`;}
 function render(){
  if(!ROWS.length){document.getElementById('board').innerHTML=`<div class="bigempty"><h2>Nenhum dado carregado</h2><p>Clique em <b>Atualizar dados</b> e envie os 3 arquivos do dia (VTEX Report, Abbiamo ORDERS e EVENTS) e, uma vez, a base de gestores (aba Lojas em CSV).</p><button class="btn primary" onclick="openUpload()">Atualizar dados</button></div>`;const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML='';return;}
  const rows=activeRows(),m=compute(rows),susp=computeSuspect(rows);
