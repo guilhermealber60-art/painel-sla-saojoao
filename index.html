@@ -346,6 +346,7 @@ function setProg(p){const e=document.getElementById('prog');e.style.display='blo
 function pdate(s){if(!s)return null;s=String(s).trim().replace(/Z$/,'').trim();if(!s)return null;s=s.replace('T',' ');const m=s.match(/(\d{4})-(\d{2})-(\d{2})[ ]?(\d{2}):(\d{2})(?::(\d{2}))?/);if(!m)return null;return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));}
 const toMin=d=>d?Math.floor((d-EPOCH)/60000):-1,toSec=(a,b)=>(a&&b)?Math.round((a-b)/1000):-1;
 function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();}
+function isExcludedModal(modal){const n=norm(modal);return n.startsWith('retirada em loja')||n.indexOf('sedex')>=0;}
 function parseLojas(file){return new Promise((res,rej)=>Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>{const out=[];for(const row of r.data){const k={};for(const key in row)k[norm(key)]=row[key];const cod=parseInt(k['loja']||k['cod']||k['codigo']||k['cod filial'],10);if(!cod)continue;out.push({cod,filial:k['filial']||'',diretor:k['diretor']||'',distrital:k['distrital']||'',coordenador:k['coordenador']||'',uf:k['uf']||'',regional:k['regiao']||k['regional']||''});}res(out);},error:rej}));}
 function parseVtex(file){return new Promise((res,rej)=>{const map={};let first=true,io,ic,isl;Papa.parse(file,{delimiter:';',skipEmptyLines:true,chunk:r=>{for(const row of r.data){if(first){first=false;const h=row.map(x=>x.replace(/^\ufeff/,''));io=h.indexOf('Order');ic=h.indexOf('Creation Date');isl=h.indexOf('SLA Type');continue;}const o=row[io];if(o&&!(o in map))map[o]=[pdate(row[ic]),row[isl]||''];}},complete:()=>res(map),error:rej});});}
 function parseOrders(file){return new Promise((res,rej)=>{const OR=new Set(['VTEX','API-V2','API Abbiamo','API ABBIAMO','API-ABBIAMO']),map={};Papa.parse(file,{delimiter:';',header:true,skipEmptyLines:true,complete:r=>{for(const row of r.data){if(row.order_status!=='SUCCESSFUL')continue;if(!OR.has(row.order_creation_origin))continue;map[row.order_number]={filial:row.seller_trading_name,cod:row.seller_identifier,plataforma:row.order_last_delivery_carrier_name||'',entregador:row.order_last_delivery_driver_name||'',criado:pdate(row.order_created_at),prazo:pdate(row.order_promised_delivery_date),chegada:pdate(row.order_delivered_delivery_date)||pdate(row.order_delivery_date)};}res(map);},error:rej});});}
@@ -354,12 +355,13 @@ function rebuild(vtex,orders,ev){const byCod={};LOJAS.forEach(l=>byCod[String(l.
  for(const k in D){(DICTS[k]||[]).forEach(v=>{if(!(v in D[k])){D[k][v]=A[k].length;A[k].push(v);}});}
  const enc=(k,v)=>{v=(v==null||v==='')?'—':v;if(!(v in D[k])){D[k][v]=A[k].length;A[k].push(v);}return D[k][v];};const rows=[];
  for(const on in orders){const o=orders[on],vt=vtex[on]||[null,''],modal=vt[1]||'',cv=vt[0],plat=o.plataforma||'',u=(plat==='UBER'||plat==='99-ENTREGAS'),e=ev[on]||{};
+  if(isExcludedModal(modal))continue;
   const coleta=u?(e.IN_TRANSIT||e.COLLECTED||e.DISPATCHED):(e.DISPATCHED||e.COLLECTED||e.IN_TRANSIT),chegada=o.chegada||e.SUCCESSFUL;
   const tsep=toSec(o.criado,cv),tcol=toSec(coleta,o.criado),tent=toSec(chegada,coleta),sep=tsep<0?-1:(tsep<=900?0:1),st=(o.prazo&&chegada)?(o.prazo<chegada?1:0):-1;
   const codn=(o.cod&&/^\d+$/.test(String(o.cod)))?parseInt(o.cod,10):-1,l=byCod[String(codn)],rsj=modal==='Entrega Rápida São João',rap=modal.indexOf('Rápida')>=0&&!rsj;
   rows.push([on,enc('FIL',o.filial),enc('ENT',o.entregador),enc('PLA',plat),enc('MOD',modal),enc('COO',l?l.coordenador:'—'),enc('DIS',l?l.distrital:'—'),enc('REG',l?l.regional:'—'),enc('DIR',l?l.diretor:'—'),u?1:0,rap?1:0,rsj?1:0,st,sep,tsep,tcol,tent,toMin(o.criado),toMin(chegada),codn]);}
  const merged={};ROWS.forEach(r=>{merged[r[0]]=r;});rows.forEach(r=>{merged[r[0]]=r;});
- DICTS={FIL:A.FIL,ENT:A.ENT,PLA:A.PLA,MOD:A.MOD,COO:A.COO,DIS:A.DIS,REG:A.REG,DIR:A.DIR};ROWS=Object.values(merged);GEN=new Date().toLocaleString('pt-BR');}
+ DICTS={FIL:A.FIL,ENT:A.ENT,PLA:A.PLA,MOD:A.MOD,COO:A.COO,DIS:A.DIS,REG:A.REG,DIR:A.DIR};ROWS=Object.values(merged).filter(r=>!isExcludedModal(A.MOD[r[C.MOD]]));GEN=new Date().toLocaleString('pt-BR');}
 function clearAccumulated(){if(!ROWS.length){toast('Não há dados acumulados.');return;}if(!confirm('Isso apaga TODOS os pedidos acumulados no painel (histórico visível na tela). Não é possível desfazer localmente — só recuperando um snapshot.json antigo pelo histórico do Git. Continuar?'))return;ROWS=[];DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]};GEN='—';clearFilters();buildFilters();render();toast('Dados acumulados apagados. Envie os CSVs e publique para recomeçar.');}
 async function processFiles(){const fv=document.getElementById('fVtex').files[0],fo=document.getElementById('fOrders').files[0],fe=document.getElementById('fEvents').files[0],fl=document.getElementById('fLojas').files[0];
  if(!fv||!fo||!fe){toast('Envie os 3 arquivos diários.');return;}
@@ -420,7 +422,7 @@ async function publishSnapshot(){if(!ROWS.length){toast('Carregue os dados prime
  }catch(e){toast('Falha ao publicar: '+e.message);}}
 async function boot(){
  try{const lj=await fetch('data/lojas.json',{cache:'no-store'});if(lj.ok){const j=await lj.json();if(Array.isArray(j)&&j.length){LOJAS=j;try{localStorage.setItem('lojasBase',JSON.stringify(LOJAS));}catch(e){}}}}catch(e){}
- try{const sn=await fetch('data/snapshot.json',{cache:'no-store'});if(sn.ok){const s=await sn.json();if(s&&s.rows&&s.rows.length){DICTS=s.dicts;ROWS=s.rows;GEN=s.gen||GEN;}}}catch(e){}
+ try{const sn=await fetch('data/snapshot.json',{cache:'no-store'});if(sn.ok){const s=await sn.json();if(s&&s.rows&&s.rows.length){DICTS=s.dicts;ROWS=s.rows.filter(r=>!isExcludedModal(DICTS.MOD[r[C.MOD]]));GEN=s.gen||GEN;}}}catch(e){}
  updatePublishBtn();buildFilters();render();}
 boot();
 </script></body></html>
