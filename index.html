@@ -180,6 +180,7 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
  <div class="drop"><label>Escopo</label>
   <select id="fechScopeType" onchange="updateFechScope()" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:13px;margin-bottom:8px">
    <option value="geral">Geral (toda a rede)</option>
+   <option value="dir">Diretor</option>
    <option value="dis">Distrital</option>
    <option value="coo">Coordenador</option>
   </select>
@@ -448,10 +449,11 @@ function monthOptions(){const seen={},list=[];for(const r of ROWS){const cm=r[C.
  return list.map(x=>{let l=new Date(x.y,x.mo,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});l=l.charAt(0).toUpperCase()+l.slice(1);return {value:x.key,label:l};});}
 function fechRows(y,mo,scopeType,scopeVal){const startMin=Math.floor((new Date(y,mo,1)-EPOCH)/60000),endMin=Math.floor((new Date(y,mo+1,1)-EPOCH)/60000);
  return ROWS.filter(r=>{const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)return false;
+  if(scopeType==='dir')return DICTS.DIR[r[C.DIR]]===scopeVal;
   if(scopeType==='dis')return DICTS.DIS[r[C.DIS]]===scopeVal;
   if(scopeType==='coo')return DICTS.COO[r[C.COO]]===scopeVal;
   return true;});}
-function fechScopeLabel(scopeType,scopeVal){if(scopeType==='dis')return 'Distrito '+scopeVal;if(scopeType==='coo')return 'Coordenador '+scopeVal;return 'Geral';}
+function fechScopeLabel(scopeType,scopeVal){if(scopeType==='dir')return 'Diretor '+scopeVal;if(scopeType==='dis')return 'Distrito '+scopeVal;if(scopeType==='coo')return 'Coordenador '+scopeVal;return 'Geral';}
 const ICON_CLIP='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M8 11h8M8 15h8"/></svg>';
 const ICON_MOTO='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 18h6l3-7h4M12 11l2 4"/></svg>';
 const ICON_TRUCK='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="8" width="12" height="8"/><path d="M14 11h4l3 3v2h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>';
@@ -495,7 +497,7 @@ function openFechamento(){if(!ROWS.length){toast('Carregue dados primeiro.');ret
  document.getElementById('fechScopeType').value='geral';updateFechScope();document.getElementById('ovlFechamento').classList.add('show');}
 function updateFechScope(){const t=v('fechScopeType'),wrap=document.getElementById('fechScopeValWrap'),sel=document.getElementById('fechScopeVal');
  if(t==='geral'){wrap.style.display='none';return;}
- wrap.style.display='';const opts=t==='dis'?optionsFor('dis'):optionsFor('coo');
+ wrap.style.display='';const opts=t==='dir'?optionsFor('dir'):t==='dis'?optionsFor('dis'):optionsFor('coo');
  sel.innerHTML=opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')||'<option value="">Sem opções</option>';}
 async function doGenerateFechamento(){const mesVal=v('fechMes');if(!mesVal){toast('Escolha um mês.');return;}
  const[ys,ms]=mesVal.split('-'),y=parseInt(ys,10),mo=parseInt(ms,10)-1,scopeType=v('fechScopeType'),scopeVal=scopeType==='geral'?'':v('fechScopeVal');
