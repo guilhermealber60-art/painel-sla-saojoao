@@ -101,38 +101,41 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
 .bigempty h2{font-size:18px;color:var(--ink2);margin-bottom:8px}.bigempty p{color:var(--muted);max-width:520px;margin:0 auto 16px}
 .foot{text-align:center;color:var(--muted);font-size:11px;padding:20px}@media print{.filters,.top .tbtns{display:none}}
 .rk.green{background:var(--green)}
-.fech-report{width:1400px;background:var(--canvas);padding:26px;font-family:Inter,sans-serif;color:var(--text)}
-.fech-top{display:flex;align-items:center;gap:16px;margin-bottom:22px}
-.fech-bar{width:8px;height:56px;background:var(--red);border-radius:4px;flex:0 0 auto}
-.fech-title{font-family:Archivo,sans-serif;font-weight:800;font-size:32px;color:var(--ink2);letter-spacing:-.5px;white-space:nowrap}
-.fech-spacer{flex:1}
-.fech-badge{background:var(--ink2);color:#fff;font-weight:800;font-size:16px;letter-spacing:.4px;padding:12px 26px;border-radius:10px;white-space:nowrap}
-.fech-logo{display:flex;align-items:center;gap:8px;font-family:Archivo,sans-serif;font-weight:800;color:var(--ink2);font-size:15px;white-space:nowrap;margin-left:16px}
-.fech-logo .dot{width:26px;height:26px;border-radius:50%;background:var(--green)}
-.fech-body{display:flex;gap:18px}
-.fech-kpis{width:300px;flex:0 0 auto;display:flex;flex-direction:column;gap:14px}
-.fbox{border:1px solid var(--line2);border-radius:14px;background:#fff;overflow:hidden;box-shadow:var(--shadow)}
-.fbox .fhead{color:#fff;text-align:center;font-weight:800;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;padding:8px}
+.fech-report{width:1280px;height:720px;box-sizing:border-box;background:var(--canvas);padding:20px;font-family:Inter,sans-serif;color:var(--text);display:flex;flex-direction:column;overflow:hidden}
+.fech-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex:0 0 auto;min-width:0}
+.fech-bar{width:6px;height:40px;background:var(--red);border-radius:3px;flex:0 0 auto}
+.fech-title{font-family:Archivo,sans-serif;font-weight:800;font-size:23px;color:var(--ink2);letter-spacing:-.4px;white-space:nowrap;flex:0 0 auto}
+.fech-spacer{flex:1;min-width:8px}
+.fech-badge{background:var(--ink2);color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;padding:8px 18px;border-radius:8px;white-space:nowrap;flex:0 0 auto}
+.fech-logo{display:flex;align-items:center;gap:7px;font-family:Archivo,sans-serif;font-weight:800;color:var(--ink2);font-size:12.5px;white-space:nowrap;margin-left:12px;flex:0 0 auto}
+.fech-logo .dot{width:20px;height:20px;border-radius:50%;background:var(--green);flex:0 0 auto}
+.fech-body{display:flex;gap:12px;flex:1;min-height:0}
+.fech-kpis{width:250px;flex:0 0 auto;display:flex;flex-direction:column;gap:10px;min-height:0}
+.fbox{border:1px solid var(--line2);border-radius:11px;background:#fff;overflow:hidden;box-shadow:var(--shadow);flex:1;display:flex;flex-direction:column;min-height:0}
+.fbox .fhead{color:#fff;text-align:center;font-weight:800;font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;padding:6px;flex:0 0 auto}
 .fbox.navy .fhead{background:var(--ink2)}.fbox.green .fhead{background:var(--green)}.fbox.blue .fhead{background:var(--accent)}
-.fbox .fbody2{display:flex;align-items:center;gap:10px;padding:14px 10px}
-.fbox .ficon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto}
+.fbox .fbody2{display:flex;align-items:center;gap:8px;padding:8px 9px;flex:1}
+.fbox .ficon{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto}
+.fbox .ficon svg{width:16px;height:16px}
 .fbox.navy .ficon{background:var(--ink2)}.fbox.green .ficon{background:var(--green)}.fbox.blue .ficon{background:var(--accent)}
-.fbox .fstats{display:flex;flex:1;justify-content:space-between;text-align:center}
-.fbox .fstat b{display:block;font-family:"JetBrains Mono";font-size:19px;font-weight:800;color:var(--ink2)}
-.fbox .fstat span{font-size:8.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.3px}
-.fech-tables{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
-.fech-row{display:flex;gap:16px}
+.fbox .fstats{display:flex;flex:1;justify-content:space-between;text-align:center;min-width:0}
+.fbox .fstat{min-width:0}
+.fbox .fstat b{display:block;font-family:"JetBrains Mono";font-size:14px;font-weight:800;color:var(--ink2);white-space:nowrap}
+.fbox .fstat span{font-size:6.6px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.fech-tables{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+.fech-row{display:flex;gap:10px;flex:1;min-height:0}
 .fech-row>.ftable-card{flex:1;min-width:0}
-.ftable-card{border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
-.ftable-card .fth{background:var(--ink2);color:#fff;font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:9px 12px}
+.ftable-card{border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#fff;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0}
+.ftable-card .fth{background:var(--ink2);color:#fff;font-weight:800;font-size:9.5px;letter-spacing:.3px;text-transform:uppercase;padding:6px 10px;flex:0 0 auto}
 .ftable-card .fth.green{background:var(--green)}
-.ftable-card table{width:100%;border-collapse:collapse;font-size:12px}
-.ftable-card th{background:var(--surface2);font-size:9px;text-transform:uppercase;color:var(--muted);padding:6px 10px;text-align:left;font-weight:800;white-space:nowrap}
+.ftable-card table{width:100%;border-collapse:collapse;font-size:9.5px;table-layout:fixed}
+.ftable-card th{background:var(--surface2);font-size:7.3px;text-transform:uppercase;color:var(--muted);padding:3px 8px;text-align:left;font-weight:800;white-space:nowrap}
 .ftable-card th.num,.ftable-card td.num{text-align:center}
-.ftable-card td{padding:6px 10px;border-top:1px solid var(--line2)}
-.fech-foot{margin-top:18px;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:11px 16px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);font-weight:600}
-.fech-foot .ic{width:24px;height:24px;border-radius:50%;background:var(--ink2);color:#fff;display:grid;place-items:center;font-size:11px;flex:0 0 auto}
-.fech-redline{height:4px;background:var(--red);border-radius:2px;margin-top:10px}
+.ftable-card td{padding:3px 8px;border-top:1px solid var(--line2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftrunc{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fech-foot{margin-top:10px;background:#fff;border:1px solid var(--line2);border-radius:8px;padding:7px 14px;display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--muted);font-weight:600;flex:0 0 auto;white-space:nowrap;overflow:hidden}
+.fech-foot .ic{width:19px;height:19px;border-radius:50%;background:var(--ink2);color:#fff;display:grid;place-items:center;font-size:9px;flex:0 0 auto}
+.fech-redline{height:3px;background:var(--red);border-radius:2px;margin-top:6px;flex:0 0 auto}
 </style></head><body>
 <header class="top">
  <div class="brand"><div class="logo">SJ</div><div><h1>Painel de Entregas — Nível de Serviço</h1><div class="sub">Farmácias São João · E-commerce</div></div></div>
@@ -464,14 +467,15 @@ function fechKpiBox(cls,label,icon,n,np,at,sla){return `<div class="fbox ${cls}"
  <div class="fstat"><b>${fmtInt(at)}</b><span>Atraso</span></div>
  <div class="fstat"><b style="color:${n?slaColor(sla):'var(--muted)'}">${n?fmtPct(sla):'—'}</b><span>NS</span></div>
 </div></div></div>`;}
-function fechTableModal(mod){const rows=orderMod(mod).map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.at)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('');
- return `<div class="ftable-card"><div class="fth">Nível de Serviço por Modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Atraso</th><th class="num">No prazo</th><th class="num">Total Geral</th><th class="num">NS</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
-function fechTableGrp(title,colLabel,arr){const rows=arr.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.at)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${fmtPct(x.sla)}</span></td></tr>`).join('');
- return `<div class="ftable-card"><div class="fth">${esc(title)}</div><table><thead><tr><th>${esc(colLabel)}</th><th class="num">Atraso</th><th class="num">No prazo</th><th class="num">Total Geral</th><th class="num">NS</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
-function fechTableRankAtraso(arr){const rows=arr.map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.c)}</td></tr>`).join('');
- return `<div class="ftable-card"><div class="fth">Filiais com Maior Nº de Atraso</div><table><thead><tr><th style="width:34px">#</th><th>Filiais</th><th class="num">Atrasos</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
-function fechTableRankSep(arr){const rows=arr.map((x,i)=>`<tr><td><span class="rk green">${i+1}</span></td><td>${esc(x.nm)}</td><td class="num">${dur(x.avg)}</td></tr>`).join('');
- return `<div class="ftable-card"><div class="fth green">Piores Média de Separação (Rápida)</div><table><thead><tr><th style="width:34px">#</th><th>Lojas</th><th class="num">Tempo Médio</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+const FECH_MAXROWS=8;
+function fechTableModal(mod){const rows=orderMod(mod).slice(0,FECH_MAXROWS).map(x=>`<tr><td><span class="ftrunc">${esc(x.nm)}</span></td><td class="num">${fmtInt(x.at)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth">Nível de Serviço por Modalidade</div><table><colgroup><col><col style="width:15%"><col style="width:17%"><col style="width:17%"><col style="width:15%"></colgroup><thead><tr><th>Modalidade</th><th class="num">Atraso</th><th class="num">No prazo</th><th class="num">Total</th><th class="num">NS</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function fechTableGrp(title,colLabel,arr){const rows=arr.slice(0,FECH_MAXROWS).map(x=>`<tr><td><span class="ftrunc">${esc(x.nm)}</span></td><td class="num">${fmtInt(x.at)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${fmtPct(x.sla)}</span></td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth">${esc(title)}</div><table><colgroup><col><col style="width:15%"><col style="width:17%"><col style="width:17%"><col style="width:15%"></colgroup><thead><tr><th>${esc(colLabel)}</th><th class="num">Atraso</th><th class="num">No prazo</th><th class="num">Total</th><th class="num">NS</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function fechTableRankAtraso(arr){const rows=arr.slice(0,FECH_MAXROWS).map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td><span class="ftrunc">${esc(x.nm)}</span></td><td class="num">${fmtInt(x.c)}</td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth">Filiais com Maior Nº de Atraso</div><table><colgroup><col style="width:24px"><col><col style="width:22%"></colgroup><thead><tr><th>#</th><th>Filiais</th><th class="num">Atrasos</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function fechTableRankSep(arr){const rows=arr.slice(0,FECH_MAXROWS).map((x,i)=>`<tr><td><span class="rk green">${i+1}</span></td><td><span class="ftrunc">${esc(x.nm)}</span></td><td class="num">${dur(x.avg)}</td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth green">Piores Média de Separação (Rápida)</div><table><colgroup><col style="width:24px"><col><col style="width:26%"></colgroup><thead><tr><th>#</th><th>Lojas</th><th class="num">Tempo Médio</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
 function buildFechamentoHtml(y,mo,scopeType,scopeVal){const rows=fechRows(y,mo,scopeType,scopeVal),m=compute(rows);
  let monthName=new Date(y,mo,1).toLocaleDateString('pt-BR',{month:'long'});const monthCap=monthName.charAt(0).toUpperCase()+monthName.slice(1);
  const scopeLabel=fechScopeLabel(scopeType,scopeVal),badge=(monthCap+' – '+scopeLabel).toUpperCase();
@@ -505,7 +509,7 @@ async function doGenerateFechamento(){const mesVal=v('fechMes');if(!mesVal){toas
  const html=buildFechamentoHtml(y,mo,scopeType,scopeVal);
  const holder=document.createElement('div');holder.style.position='fixed';holder.style.left='-99999px';holder.style.top='0';holder.innerHTML=html;document.body.appendChild(holder);
  toast('Gerando imagem…');
- try{const el=holder.querySelector('.fech-report');const cv=await html2canvas(el,{scale:2,backgroundColor:'#EDEFF4'});const a=document.createElement('a');
+ try{const el=holder.querySelector('.fech-report');const cv=await html2canvas(el,{scale:2,backgroundColor:'#EDEFF4',width:1280,height:720,windowWidth:1280,windowHeight:720});const a=document.createElement('a');
   const scopeSlug=(scopeType==='geral'?'Geral':scopeVal).replace(/[^\w-]+/g,'_');
   a.download=`Fechamento_Operacional_${mesVal}_${scopeSlug}.png`;a.href=cv.toDataURL('image/png');a.click();toast('Imagem gerada.');
  }catch(e){toast('Falha ao gerar imagem: '+e.message);}
