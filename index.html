@@ -100,6 +100,39 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
 .bigempty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:46px 20px;text-align:center}
 .bigempty h2{font-size:18px;color:var(--ink2);margin-bottom:8px}.bigempty p{color:var(--muted);max-width:520px;margin:0 auto 16px}
 .foot{text-align:center;color:var(--muted);font-size:11px;padding:20px}@media print{.filters,.top .tbtns{display:none}}
+.rk.green{background:var(--green)}
+.fech-report{width:1400px;background:var(--canvas);padding:26px;font-family:Inter,sans-serif;color:var(--text)}
+.fech-top{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.fech-bar{width:8px;height:56px;background:var(--red);border-radius:4px;flex:0 0 auto}
+.fech-title{font-family:Archivo,sans-serif;font-weight:800;font-size:32px;color:var(--ink2);letter-spacing:-.5px;white-space:nowrap}
+.fech-spacer{flex:1}
+.fech-badge{background:var(--ink2);color:#fff;font-weight:800;font-size:16px;letter-spacing:.4px;padding:12px 26px;border-radius:10px;white-space:nowrap}
+.fech-logo{display:flex;align-items:center;gap:8px;font-family:Archivo,sans-serif;font-weight:800;color:var(--ink2);font-size:15px;white-space:nowrap;margin-left:16px}
+.fech-logo .dot{width:26px;height:26px;border-radius:50%;background:var(--green)}
+.fech-body{display:flex;gap:18px}
+.fech-kpis{width:300px;flex:0 0 auto;display:flex;flex-direction:column;gap:14px}
+.fbox{border:1px solid var(--line2);border-radius:14px;background:#fff;overflow:hidden;box-shadow:var(--shadow)}
+.fbox .fhead{color:#fff;text-align:center;font-weight:800;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;padding:8px}
+.fbox.navy .fhead{background:var(--ink2)}.fbox.green .fhead{background:var(--green)}.fbox.blue .fhead{background:var(--accent)}
+.fbox .fbody2{display:flex;align-items:center;gap:10px;padding:14px 10px}
+.fbox .ficon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto}
+.fbox.navy .ficon{background:var(--ink2)}.fbox.green .ficon{background:var(--green)}.fbox.blue .ficon{background:var(--accent)}
+.fbox .fstats{display:flex;flex:1;justify-content:space-between;text-align:center}
+.fbox .fstat b{display:block;font-family:"JetBrains Mono";font-size:19px;font-weight:800;color:var(--ink2)}
+.fbox .fstat span{font-size:8.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.3px}
+.fech-tables{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
+.fech-row{display:flex;gap:16px}
+.fech-row>.ftable-card{flex:1;min-width:0}
+.ftable-card{border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+.ftable-card .fth{background:var(--ink2);color:#fff;font-weight:800;font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:9px 12px}
+.ftable-card .fth.green{background:var(--green)}
+.ftable-card table{width:100%;border-collapse:collapse;font-size:12px}
+.ftable-card th{background:var(--surface2);font-size:9px;text-transform:uppercase;color:var(--muted);padding:6px 10px;text-align:left;font-weight:800;white-space:nowrap}
+.ftable-card th.num,.ftable-card td.num{text-align:center}
+.ftable-card td{padding:6px 10px;border-top:1px solid var(--line2)}
+.fech-foot{margin-top:18px;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:11px 16px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);font-weight:600}
+.fech-foot .ic{width:24px;height:24px;border-radius:50%;background:var(--ink2);color:#fff;display:grid;place-items:center;font-size:11px;flex:0 0 auto}
+.fech-redline{height:4px;background:var(--red);border-radius:2px;margin-top:10px}
 </style></head><body>
 <header class="top">
  <div class="brand"><div class="logo">SJ</div><div><h1>Painel de Entregas — Nível de Serviço</h1><div class="sub">Farmácias São João · E-commerce</div></div></div>
@@ -109,6 +142,7 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
   <button class="tbtn" onclick="openBase()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Base de gestores</button>
   <button class="tbtn" onclick="exportAtrasados()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8l8 8M16 8l-8 8"/></svg>Exportar pedidos em atraso</button>
   <button class="tbtn" onclick="exportSlides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 5-5 4 4"/></svg>Imagem (slides)</button>
+  <button class="tbtn" onclick="openFechamento()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 20v-3M12 20v-6M17 20v-9"/></svg>Fechamento operacional</button>
   <button class="tbtn" id="btnPublish" onclick="publishSnapshot()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4"/><path d="M4 21h16"/></svg>Publicar (snapshot)</button>
   <button class="tbtn" onclick="openConfig()" title="Configurar publicação direta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Config. publicação</button>
  </div>
@@ -139,6 +173,19 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
  <div class="note" style="background:var(--redbg);border-color:var(--red);color:var(--text)"><b>Segurança:</b> o token fica salvo só neste navegador (não é enviado a mim nem a ninguém além do GitHub). Crie um <b>fine-grained token</b> em <b>github.com/settings/tokens</b>, restrito ao repositório <b>painel-sla-saojoao</b>, com permissão apenas de <b>Contents: Read and write</b>, e defina uma expiração (ex.: 1 ano). Não use um token com acesso a outros repositórios. Se trocar de computador ou navegador, precisa configurar de novo lá.</div>
  <div class="drop"><label>Token de acesso (GitHub)</label><input type="password" id="cfgToken" placeholder="github_pat_…" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:13px"></div>
  <div class="mbtns"><button class="btn primary" onclick="saveToken()">Salvar</button><button class="btn" onclick="closeOvl('ovlConfig')">Fechar</button><button class="btn danger" onclick="removeToken()" style="margin-left:auto">Remover token deste navegador</button></div>
+</div></div></div>
+<div class="ovl" id="ovlFechamento"><div class="modal"><div class="mh"><h3>Fechamento operacional (imagem)</h3><button class="x" onclick="closeOvl('ovlFechamento')">×</button></div><div class="mb">
+ <div class="note">Gera uma imagem no formato de fechamento mensal com os indicadores já calculados para o mês e escopo escolhidos — independe dos filtros ativos na tela.</div>
+ <div class="drop"><label>Mês</label><select id="fechMes" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:13px"></select></div>
+ <div class="drop"><label>Escopo</label>
+  <select id="fechScopeType" onchange="updateFechScope()" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:13px;margin-bottom:8px">
+   <option value="geral">Geral (toda a rede)</option>
+   <option value="dis">Distrital</option>
+   <option value="coo">Coordenador</option>
+  </select>
+  <div id="fechScopeValWrap" style="display:none"><select id="fechScopeVal" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:13px"></select></div>
+ </div>
+ <div class="mbtns"><button class="btn primary" onclick="doGenerateFechamento()">Gerar imagem</button><button class="btn" onclick="closeOvl('ovlFechamento')">Cancelar</button></div>
 </div></div></div>
 <div class="toast" id="toast"></div>
 
@@ -178,7 +225,7 @@ function activeRows(){const{reg,fil,dis,coo,dir,pla,mod,grp,ini,fim}=state;
   if(iniM!=null||fimM!=null){const cm=r[C.CRIA];if(cm<0)continue;if(iniM!=null&&cm<iniM)continue;if(fimM!=null&&cm>=fimM)continue;}
   out.push(r);}return out;}
 function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os=0,onp=0,rss=0,rsn=0,ts=0,tn=0,ss=0,sn=0,cs=0,cn=0,es=0,en=0;
- const fA={},frs={},frn={},pA={},pS={},pN={},coord={},dist={},modo={},sj={n:0,np:0,at:0,ss:0,sn:0};let mS=0,mE=0;
+ const fA={},frs={},frn={},pA={},pS={},pN={},coord={},dist={},modo={},filSla={},sj={n:0,np:0,at:0,ss:0,sn:0};let mS=0,mE=0;
  const Df=DICTS.FIL,Dp=DICTS.PLA,Dco=DICTS.COO,Ddi=DICTS.DIS,Dmo=DICTS.MOD;
  for(const r of rows){m.sucessos++;const a=r[C.ST]===1,np=r[C.ST]===0;if(np)m.noprazo++;if(a)m.atraso++;
   if(r[C.GRP]===1){us++;if(np)unp++;}else{os++;if(np)onp++;}
@@ -186,6 +233,7 @@ function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os
   if(r[C.RAP]===1){if(r[C.TSEP]>=0){ss+=r[C.TSEP];sn++;}if(r[C.TCOL]>=0){cs+=r[C.TCOL];cn++;}if(r[C.TENT]>=0){es+=r[C.TENT];en++;}
   if(r[C.TSEP]>=0&&r[C.TCOL]>=0&&r[C.TENT]>=0){ts+=r[C.TSEP]+r[C.TCOL]+r[C.TENT];tn++;}}
   const f=r[C.FIL];if(a)fA[f]=(fA[f]||0)+1;if(r[C.RAP]===1&&r[C.TSEP]>=0){frs[f]=(frs[f]||0)+r[C.TSEP];frn[f]=(frn[f]||0)+1;}
+  (filSla[f]=filSla[f]||{n:0,np:0,at:0}).n++;if(np)filSla[f].np++;if(a)filSla[f].at++;
   const p=r[C.PLA];pN[p]=(pN[p]||0)+1;if(a)pA[p]=(pA[p]||0)+1;pS[p]=(pS[p]||0)+1;
   const ck=r[C.COO];(coord[ck]=coord[ck]||{n:0,np:0,at:0}).n++;if(np)coord[ck].np++;if(a)coord[ck].at++;
   const dk=r[C.DIS];(dist[dk]=dist[dk]||{n:0,np:0,at:0}).n++;if(np)dist[dk].np++;if(a)dist[dk].at++;
@@ -201,6 +249,7 @@ function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os
  m.coord=Object.keys(coord).map(k=>({nm:Dco[k],...coord[k],sla:pct(coord[k].np,coord[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
  m.dist=Object.keys(dist).map(k=>({nm:Ddi[k],...dist[k],sla:pct(dist[k].np,dist[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
  m.mod=Object.keys(modo).map(k=>({nm:Dmo[k],...modo[k],sla:pct(modo[k].np,modo[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>b.n-a.n);
+ m.filSla=Object.keys(filSla).map(k=>({nm:Df[k],...filSla[k],sla:pct(filSla[k].np,filSla[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
  return m;}
 function computeSuspect(rows){const De=DICTS.ENT,Dp=DICTS.PLA,Df=DICTS.FIL,byday={};
  for(const r of rows){const cm=r[C.CHEG];if(cm<0)continue;const nm=De[r[C.ENT]];if(!nm||nm==='—')continue;const k=r[C.ENT]+'|'+dateStr(minToDate(cm));(byday[k]=byday[k]||{ent:r[C.ENT],times:[],pla:{},fil:{}});byday[k].times.push(cm);byday[k].pla[Dp[r[C.PLA]]]=1;const fn=Df[r[C.FIL]];if(fn&&fn!=='—')byday[k].fil[fn]=(byday[k].fil[fn]||0)+1;}
@@ -392,6 +441,73 @@ async function exportSlides(){if(!ROWS.length){toast('Carregue dados primeiro.')
  toast('Imagens exportadas ('+sl.length+' slides).');}
 async function exportChartImg(){const el=document.getElementById('wkChartCard');if(!el){toast('Carregue dados primeiro.');return;}toast('Gerando imagem…');const cv=await html2canvas(el,{scale:2,backgroundColor:'#FFFFFF'});const a=document.createElement('a');a.download='Evolucao_semanal_SLA.png';a.href=cv.toDataURL('image/png');a.click();toast('Imagem exportada.');}
 function dl(name,text){const b=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
+const MODORDER=['Entrega Padrão','Entrega Padrão São João','Entrega Programada','Entrega Programada São João','Entrega Rápida','Entrega Rápida São João','Entrega Rápida (até 2 horas)','Entrega Expressa'];
+function orderMod(arr){return arr.slice().sort((a,b)=>{const ia=MODORDER.indexOf(a.nm),ib=MODORDER.indexOf(b.nm);if(ia===-1&&ib===-1)return b.n-a.n;if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;});}
+function monthOptions(){const seen={},list=[];for(const r of ROWS){const cm=r[C.CRIA];if(cm<0)continue;const d=minToDate(cm),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!seen[key]){seen[key]=true;list.push({key,y:d.getFullYear(),mo:d.getMonth()});}}
+ list.sort((a,b)=>b.key.localeCompare(a.key));
+ return list.map(x=>{let l=new Date(x.y,x.mo,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});l=l.charAt(0).toUpperCase()+l.slice(1);return {value:x.key,label:l};});}
+function fechRows(y,mo,scopeType,scopeVal){const startMin=Math.floor((new Date(y,mo,1)-EPOCH)/60000),endMin=Math.floor((new Date(y,mo+1,1)-EPOCH)/60000);
+ return ROWS.filter(r=>{const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)return false;
+  if(scopeType==='dis')return DICTS.DIS[r[C.DIS]]===scopeVal;
+  if(scopeType==='coo')return DICTS.COO[r[C.COO]]===scopeVal;
+  return true;});}
+function fechScopeLabel(scopeType,scopeVal){if(scopeType==='dis')return 'Distrito '+scopeVal;if(scopeType==='coo')return 'Coordenador '+scopeVal;return 'Geral';}
+const ICON_CLIP='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M8 11h8M8 15h8"/></svg>';
+const ICON_MOTO='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 18h6l3-7h4M12 11l2 4"/></svg>';
+const ICON_TRUCK='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="8" width="12" height="8"/><path d="M14 11h4l3 3v2h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>';
+const ICON_MIC='<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="2"><path d="M3 10v4h4l5 4V6L7 10z"/><path d="M16 9a3 3 0 010 6"/></svg>';
+function fechKpiBox(cls,label,icon,n,np,at,sla){return `<div class="fbox ${cls}"><div class="fhead">${label}</div><div class="fbody2"><div class="ficon">${icon}</div><div class="fstats">
+ <div class="fstat"><b>${fmtInt(n)}</b><span>Pedido</span></div>
+ <div class="fstat"><b>${fmtInt(np)}</b><span>No prazo</span></div>
+ <div class="fstat"><b>${fmtInt(at)}</b><span>Atraso</span></div>
+ <div class="fstat"><b style="color:${n?slaColor(sla):'var(--muted)'}">${n?fmtPct(sla):'—'}</b><span>NS</span></div>
+</div></div></div>`;}
+function fechTableModal(mod){const rows=orderMod(mod).map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.at)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth">Nível de Serviço por Modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Atraso</th><th class="num">No prazo</th><th class="num">Total Geral</th><th class="num">NS</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function fechTableGrp(title,colLabel,arr){const rows=arr.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.at)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${fmtPct(x.sla)}</span></td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth">${esc(title)}</div><table><thead><tr><th>${esc(colLabel)}</th><th class="num">Atraso</th><th class="num">No prazo</th><th class="num">Total Geral</th><th class="num">NS</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function fechTableRankAtraso(arr){const rows=arr.map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.c)}</td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth">Filiais com Maior Nº de Atraso</div><table><thead><tr><th style="width:34px">#</th><th>Filiais</th><th class="num">Atrasos</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function fechTableRankSep(arr){const rows=arr.map((x,i)=>`<tr><td><span class="rk green">${i+1}</span></td><td>${esc(x.nm)}</td><td class="num">${dur(x.avg)}</td></tr>`).join('');
+ return `<div class="ftable-card"><div class="fth green">Piores Média de Separação (Rápida)</div><table><thead><tr><th style="width:34px">#</th><th>Lojas</th><th class="num">Tempo Médio</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="empty">Sem dados</td></tr>'}</tbody></table></div>`;}
+function buildFechamentoHtml(y,mo,scopeType,scopeVal){const rows=fechRows(y,mo,scopeType,scopeVal),m=compute(rows);
+ let monthName=new Date(y,mo,1).toLocaleDateString('pt-BR',{month:'long'});const monthCap=monthName.charAt(0).toUpperCase()+monthName.slice(1);
+ const scopeLabel=fechScopeLabel(scopeType,scopeVal),badge=(monthCap+' – '+scopeLabel).toUpperCase();
+ const rightTbl=scopeType==='coo'?fechTableGrp('Nível de Serviço por Filial','Filial',m.filSla):fechTableGrp('Nível de Serviço por Coordenador','Coordenador',m.coord);
+ return `<div class="fech-report">
+  <div class="fech-top"><div class="fech-bar"></div><div class="fech-title">FECHAMENTO OPERACIONAL</div><div class="fech-spacer"></div><div class="fech-badge">${esc(badge)}</div><div class="fech-logo"><span class="dot"></span>Farmácias São João</div></div>
+  <div class="fech-body">
+   <div class="fech-kpis">
+    ${fechKpiBox('navy','Status Geral',ICON_CLIP,m.sucessos,m.noprazo,m.atraso,m.slaGeral)}
+    ${fechKpiBox('green','Status Uber + 99',ICON_MOTO,m.u_s,m.u_np,m.u_at,m.slaU)}
+    ${fechKpiBox('blue','Status Terceirizados',ICON_TRUCK,m.o_s,m.o_np,m.o_at,m.slaO)}
+   </div>
+   <div class="fech-tables">
+    <div class="fech-row">${fechTableModal(m.mod)}${rightTbl}</div>
+    <div class="fech-row">${fechTableRankAtraso(m.filAtr)}${fechTableRankSep(m.filRap)}</div>
+   </div>
+  </div>
+  <div class="fech-foot"><span class="ic">${ICON_MIC}</span>Dados referentes ao mês de ${esc(monthCap)} – ${esc(scopeLabel)}</div>
+  <div class="fech-redline"></div>
+ </div>`;}
+function openFechamento(){if(!ROWS.length){toast('Carregue dados primeiro.');return;}
+ const opts=monthOptions();document.getElementById('fechMes').innerHTML=opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('')||'<option value="">Sem dados</option>';
+ document.getElementById('fechScopeType').value='geral';updateFechScope();document.getElementById('ovlFechamento').classList.add('show');}
+function updateFechScope(){const t=v('fechScopeType'),wrap=document.getElementById('fechScopeValWrap'),sel=document.getElementById('fechScopeVal');
+ if(t==='geral'){wrap.style.display='none';return;}
+ wrap.style.display='';const opts=t==='dis'?optionsFor('dis'):optionsFor('coo');
+ sel.innerHTML=opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')||'<option value="">Sem opções</option>';}
+async function doGenerateFechamento(){const mesVal=v('fechMes');if(!mesVal){toast('Escolha um mês.');return;}
+ const[ys,ms]=mesVal.split('-'),y=parseInt(ys,10),mo=parseInt(ms,10)-1,scopeType=v('fechScopeType'),scopeVal=scopeType==='geral'?'':v('fechScopeVal');
+ if(scopeType!=='geral'&&!scopeVal){toast('Escolha um valor para o escopo.');return;}
+ const html=buildFechamentoHtml(y,mo,scopeType,scopeVal);
+ const holder=document.createElement('div');holder.style.position='fixed';holder.style.left='-99999px';holder.style.top='0';holder.innerHTML=html;document.body.appendChild(holder);
+ toast('Gerando imagem…');
+ try{const el=holder.querySelector('.fech-report');const cv=await html2canvas(el,{scale:2,backgroundColor:'#EDEFF4'});const a=document.createElement('a');
+  const scopeSlug=(scopeType==='geral'?'Geral':scopeVal).replace(/[^\w-]+/g,'_');
+  a.download=`Fechamento_Operacional_${mesVal}_${scopeSlug}.png`;a.href=cv.toDataURL('image/png');a.click();toast('Imagem gerada.');
+ }catch(e){toast('Falha ao gerar imagem: '+e.message);}
+ document.body.removeChild(holder);closeOvl('ovlFechamento');}
 const GH_OWNER='guilhermealber60-art',GH_REPO='painel-sla-saojoao',GH_BRANCH='main';
 const ghToken=()=>localStorage.getItem('ghToken')||'';
 const b64utf8=s=>btoa(unescape(encodeURIComponent(s)));
