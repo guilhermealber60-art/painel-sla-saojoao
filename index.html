@@ -473,7 +473,7 @@ function fechTableRankSep(arr){const rows=arr.map((x,i)=>`<tr><td><span class="r
 function buildFechamentoHtml(y,mo,scopeType,scopeVal){const rows=fechRows(y,mo,scopeType,scopeVal),m=compute(rows);
  let monthName=new Date(y,mo,1).toLocaleDateString('pt-BR',{month:'long'});const monthCap=monthName.charAt(0).toUpperCase()+monthName.slice(1);
  const scopeLabel=fechScopeLabel(scopeType,scopeVal),badge=(monthCap+' – '+scopeLabel).toUpperCase();
- const rightTbl=scopeType==='coo'?fechTableGrp('Nível de Serviço por Filial','Filial',m.filSla):fechTableGrp('Nível de Serviço por Coordenador','Coordenador',m.coord);
+ const rightTbl=scopeType==='coo'?fechTableGrp('Nível de Serviço por Filial','Filial',m.filSla):scopeType==='dis'?fechTableGrp('Nível de Serviço por Coordenador','Coordenador',m.coord):fechTableGrp('Nível de Serviço por Distrital','Distrital',m.dist);
  return `<div class="fech-report">
   <div class="fech-top"><div class="fech-bar"></div><div class="fech-title">FECHAMENTO OPERACIONAL</div><div class="fech-spacer"></div><div class="fech-badge">${esc(badge)}</div><div class="fech-logo"><span class="dot"></span>Farmácias São João</div></div>
   <div class="fech-body">
