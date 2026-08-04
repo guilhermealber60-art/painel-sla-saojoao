@@ -419,7 +419,8 @@ function rebuild(vtex,orders,ev){const byCod={};LOJAS.forEach(l=>byCod[String(l.
   const codn=(o.cod&&/^\d+$/.test(String(o.cod)))?parseInt(o.cod,10):-1,l=byCod[String(codn)],rsj=modal==='Entrega Rápida São João',rap=modal.indexOf('Rápida')>=0&&!rsj;
   rows.push([on,enc('FIL',o.filial),enc('ENT',o.entregador),enc('PLA',plat),enc('MOD',modal),enc('COO',l?l.coordenador:'—'),enc('DIS',l?l.distrital:'—'),enc('REG',l?l.regional:'—'),enc('DIR',l?l.diretor:'—'),u?1:0,rap?1:0,rsj?1:0,st,sep,tsep,tcol,tent,toMin(o.criado),toMin(chegada),codn]);}
  const merged={};ROWS.forEach(r=>{merged[r[0]]=r;});rows.forEach(r=>{merged[r[0]]=r;});
- DICTS={FIL:A.FIL,ENT:A.ENT,PLA:A.PLA,MOD:A.MOD,COO:A.COO,DIS:A.DIS,REG:A.REG,DIR:A.DIR};ROWS=Object.values(merged).filter(r=>!isExcludedModal(A.MOD[r[C.MOD]]));GEN=new Date().toLocaleString('pt-BR');}
+ DICTS={FIL:A.FIL,ENT:A.ENT,PLA:A.PLA,MOD:A.MOD,COO:A.COO,DIS:A.DIS,REG:A.REG,DIR:A.DIR};ROWS=Object.values(merged).filter(r=>!isExcludedModal(A.MOD[r[C.MOD]]));GEN=new Date().toLocaleString('pt-BR');
+ if(LOJAS.length)reResolve();}
 function clearAccumulated(){if(!ROWS.length){toast('Não há dados acumulados.');return;}if(!confirm('Isso apaga TODOS os pedidos acumulados no painel (histórico visível na tela). Não é possível desfazer localmente — só recuperando um snapshot.json antigo pelo histórico do Git. Continuar?'))return;ROWS=[];DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]};GEN='—';clearFilters();buildFilters();render();toast('Dados acumulados apagados. Envie os CSVs e publique para recomeçar.');}
 async function processFiles(){const fv=document.getElementById('fVtex').files[0],fo=document.getElementById('fOrders').files[0],fe=document.getElementById('fEvents').files[0],fl=document.getElementById('fLojas').files[0];
  if(!fv||!fo||!fe){toast('Envie os 3 arquivos diários.');return;}
@@ -552,6 +553,7 @@ async function publishSnapshot(){if(!ROWS.length){toast('Carregue os dados prime
 async function boot(){
  try{const lj=await fetch('data/lojas.json',{cache:'no-store'});if(lj.ok){const j=await lj.json();if(Array.isArray(j)&&j.length){LOJAS=j;try{localStorage.setItem('lojasBase',JSON.stringify(LOJAS));}catch(e){}}}}catch(e){}
  try{const sn=await fetch('data/snapshot.json',{cache:'no-store'});if(sn.ok){const s=await sn.json();if(s&&s.rows&&s.rows.length){DICTS=s.dicts;ROWS=s.rows.filter(r=>!isExcludedModal(DICTS.MOD[r[C.MOD]]));GEN=s.gen||GEN;}}}catch(e){}
+ if(LOJAS.length&&ROWS.length)reResolve();
  updatePublishBtn();buildFilters();render();}
 boot();
 </script></body></html>
