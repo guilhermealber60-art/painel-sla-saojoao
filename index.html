@@ -200,6 +200,8 @@ let DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]}, ROWS=[], GE
 let LOJAS=[]; try{LOJAS=JSON.parse(localStorage.getItem('lojasBase')||'[]')}catch(e){}
 const state={reg:new Set(),fil:new Set(),dis:new Set(),coo:new Set(),dir:new Set(),pla:new Set(),mod:new Set(),grp:new Set(),ini:'',fim:''};
 const chartState={ini:'',fim:'',pla:''};
+const boardState={filAtr:'pior',filRap:'pior'};
+function toggleBoardSort(k){boardState[k]=boardState[k]==='pior'?'melhor':'pior';render();}
 const FKEYS=[['reg','Regional','REG',C.REG],['fil','Filial','FIL',C.FIL],['dis','Distrital','DIS',C.DIS],['coo','Coordenador','COO',C.COO],['dir','Diretor','DIR',C.DIR],['pla','Plataforma','PLA',C.PLA],['mod','Modalidade','MOD',C.MOD],['grp','Grupo entrega','GRP',C.GRP]];
 const fmtInt=n=>Math.round(n).toLocaleString('pt-BR');
 const pct=(a,b)=>b?a/b:0;
@@ -247,8 +249,8 @@ function compute(rows){const m={sucessos:0,noprazo:0,atraso:0};let us=0,unp=0,os
  m.slaGeral=pct(m.noprazo,m.sucessos);m.slaU=pct(unp,us);m.u_s=us;m.u_np=unp;m.u_at=us-unp;m.slaO=pct(onp,os);m.o_s=os;m.o_np=onp;m.o_at=os-onp;
  m.rapSep=rsn?rss/rsn:null;m.avgSep=sn?ss/sn:null;m.avgCol=cn?cs/cn:null;m.avgEnt=en?es/en:null;m.avgTot=tn?ts/tn:null;m.motSep=mS;m.motEnt=mE;
  m.sj=sj;m.sj.sla=pct(sj.np,sj.n);m.sj.avgSep=sj.sn?sj.ss/sj.sn:null;
- m.filAtr=Object.entries(fA).map(([f,c])=>({nm:Df[f],c})).sort((a,b)=>b.c-a.c).slice(0,10);
- m.filRap=Object.keys(frn).map(f=>({nm:Df[f],avg:frs[f]/frn[f],n:frn[f]})).sort((a,b)=>b.avg-a.avg).slice(0,10);
+ m.filAtrAll=Object.keys(filSla).map(f=>({nm:Df[f],c:filSla[f].at}));
+ m.filRapAll=Object.keys(frn).map(f=>({nm:Df[f],avg:frs[f]/frn[f],n:frn[f]}));
  m.platAtr=Object.keys(pN).map(p=>({nm:Dp[p],atr:pA[p]||0,suc:pS[p]||0})).sort((a,b)=>b.atr-a.atr);
  m.coord=Object.keys(coord).map(k=>({nm:Dco[k],...coord[k],sla:pct(coord[k].np,coord[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
  m.dist=Object.keys(dist).map(k=>({nm:Ddi[k],...dist[k],sla:pct(dist[k].np,dist[k].n)})).filter(x=>x.nm&&x.nm!=='—').sort((a,b)=>a.sla-b.sla);
@@ -316,6 +318,8 @@ function render(){
  const rows=activeRows(),m=compute(rows),susp=computeSuspect(rows);
  const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML=`<b>${fmtInt(m.sucessos)}</b> pedidos no filtro`;
  const maxSuc=Math.max(1,...m.platAtr.map(x=>x.suc));const platSuc=m.platAtr.slice().sort((a,b)=>b.suc-a.suc);
+ const filAtrView=(boardState.filAtr==='melhor'?m.filAtrAll.slice().sort((a,b)=>a.c-b.c):m.filAtrAll.slice().sort((a,b)=>b.c-a.c)).slice(0,10);
+ const filRapView=(boardState.filRap==='melhor'?m.filRapAll.slice().sort((a,b)=>a.avg-b.avg):m.filRapAll.slice().sort((a,b)=>b.avg-a.avg)).slice(0,10);
  const wkRows=chartState.pla?rows.filter(r=>valOf('pla',r)===chartState.pla):rows;
  const wkFull=weeklyRapida(wkRows);const wkMin=wkFull.length?wkFull[0].d:'';const wkMax=wkFull.length?wkFull[wkFull.length-1].d:'';
  const wkDefFrom=wkMax?(shiftDate(wkMax,-6)<wkMin?wkMin:shiftDate(wkMax,-6)):wkMin;
@@ -338,8 +342,8 @@ function render(){
  </section>
  <section class="slide" data-slide="Onde agir"><div class="sechd"><span class="n">2</span><h2>Onde agir — filiais &amp; plataformas</h2><div class="rule"></div></div>
   <div class="grid cols-3">
-   <div class="card"><div class="hd"><h3>Filiais com mais atrasos</h3></div><div class="bd" style="padding:4px 6px">${table3(['#','Filial','Atrasos'],m.filAtr.map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.c)}</td></tr>`))}</div></div>
-   <div class="card"><div class="hd"><h3>Maiores médias de separação (Rápida)</h3></div><div class="bd" style="padding:4px 6px">${table3(['#','Filial','Média sep.'],m.filRap.map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td>${esc(x.nm)}<div style="font-size:10px;color:var(--muted)">${x.n} ped. rápida</div></td><td class="num">${dur(x.avg)}</td></tr>`))}</div></div>
+   <div class="card"><div class="hd"><h3>Filiais com ${boardState.filAtr==='melhor'?'menos':'mais'} atrasos</h3><button type="button" onclick="toggleBoardSort('filAtr')" style="margin-left:auto;border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer">Ver ${boardState.filAtr==='melhor'?'piores':'melhores'}</button></div><div class="bd" style="padding:4px 6px">${table3(['#','Filial','Atrasos'],filAtrView.map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.c)}</td></tr>`))}</div></div>
+   <div class="card"><div class="hd"><h3>${boardState.filRap==='melhor'?'Menores':'Maiores'} médias de separação (Rápida)</h3><button type="button" onclick="toggleBoardSort('filRap')" style="margin-left:auto;border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer">Ver ${boardState.filRap==='melhor'?'piores':'melhores'}</button></div><div class="bd" style="padding:4px 6px">${table3(['#','Filial','Média sep.'],filRapView.map((x,i)=>`<tr><td><span class="rk">${i+1}</span></td><td>${esc(x.nm)}<div style="font-size:10px;color:var(--muted)">${x.n} ped. rápida</div></td><td class="num">${dur(x.avg)}</td></tr>`))}</div></div>
    <div class="card"><div class="hd"><h3>Atraso por plataforma</h3></div><div class="bd" style="padding:4px 6px"><table><thead><tr><th>Plataforma</th><th class="num">Atrasos</th><th class="num">%</th></tr></thead><tbody>${m.platAtr.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.atr)}</td><td class="num">${m.atraso?fmtPct(x.atr/m.atraso):'—'}</td></tr>`).join('')}</tbody></table></div></div></div>
   <div style="height:16px"></div>
   <div class="grid cols-2">
@@ -499,7 +503,7 @@ function buildFechamentoHtml(y,mo,scopeType,scopeVal){const rows=fechRows(y,mo,s
    </div>
    <div class="fech-tables">
     <div class="fech-row">${fechTableModal(m.mod)}${rightTbl}</div>
-    <div class="fech-row">${fechTableRankAtraso(m.filAtr)}${fechTableRankSep(m.filRap)}</div>
+    <div class="fech-row">${fechTableRankAtraso(m.filAtrAll.slice().sort((a,b)=>b.c-a.c))}${fechTableRankSep(m.filRapAll.slice().sort((a,b)=>b.avg-a.avg))}</div>
    </div>
   </div>
   <div class="fech-foot"><span class="ic">${ICON_MIC}</span>Dados referentes ao mês de ${esc(monthCap)} – ${esc(scopeLabel)}</div>
