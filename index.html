@@ -46,8 +46,8 @@ h1,h2,h3{font-family:Archivo,sans-serif;margin:0}button{font-family:inherit;curs
 .ms-actions{display:flex;justify-content:space-between;border-top:1px solid var(--line2);margin-top:6px;padding-top:6px}
 .ms-actions button{border:none;background:none;font-size:11.5px;font-weight:600;color:var(--accent);padding:2px 4px;cursor:pointer}
 .wrap{padding:20px 22px 60px;max-width:1560px;margin:0 auto}.slide{margin-bottom:22px}
-.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,1fr)}.cols-3{grid-template-columns:repeat(3,1fr)}.cols-2{grid-template-columns:repeat(2,1fr)}
-@media(max-width:1180px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-3,.cols-2{grid-template-columns:1fr}}@media(max-width:640px){.kpis{grid-template-columns:1fr}}
+.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,1fr)}.cols-3{grid-template-columns:repeat(3,1fr)}.cols-2{grid-template-columns:repeat(2,1fr)}.cols-evo{grid-template-columns:1fr 1.6fr 0.9fr}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-3,.cols-2,.cols-evo{grid-template-columns:1fr}}@media(max-width:640px){.kpis{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
 .card .hd{padding:11px 15px 9px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px}
 .card .hd h3{font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--heading)}
@@ -214,7 +214,7 @@ const EPOCH=new Date(2026,0,1);
 let DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]}, ROWS=[], GEN='—';
 let LOJAS=[]; try{LOJAS=JSON.parse(localStorage.getItem('lojasBase')||'[]')}catch(e){}
 const state={reg:new Set(),fil:new Set(),dis:new Set(),coo:new Set(),dir:new Set(),pla:new Set(),mod:new Set(),grp:new Set(),ini:'',fim:''};
-const chartState={ini:'',fim:'',pla:''};
+const chartState={weekStart:'',pla:''};
 const boardState={filAtr:'pior',filRap:'pior'};
 function toggleBoardSort(k){boardState[k]=boardState[k]==='pior'?'melhor':'pior';render();}
 const FKEYS=[['reg','Regional','REG',C.REG],['fil','Filial','FIL',C.FIL],['dis','Distrital','DIS',C.DIS],['coo','Coordenador','COO',C.COO],['dir','Diretor','DIR',C.DIR],['pla','Plataforma','PLA',C.PLA],['mod','Modalidade','MOD',C.MOD],['grp','Grupo entrega','GRP',C.GRP]];
@@ -228,6 +228,9 @@ const pillClass=x=>x>=.9?'g':x>=.8?'a':'r';
 const minToDate=m=>m<0?null:new Date(EPOCH.getTime()+m*60000);
 const dateStr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const shiftDate=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return dateStr(d);};
+const WD=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+function mondayOf(ds){const d=new Date(ds+'T00:00:00');const dow=(d.getDay()+6)%7;return shiftDate(ds,-dow);}
+function isoWeekNum(ds){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+4-(d.getDay()||7));const yearStart=new Date(d.getFullYear(),0,1);return Math.ceil((((d-yearStart)/86400000)+1)/7);}
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function valOf(k,r){if(k==='grp')return r[C.GRP]===1?'Uber+99':'Outros';const map={reg:['REG',C.REG],fil:['FIL',C.FIL],dis:['DIS',C.DIS],coo:['COO',C.COO],dir:['DIR',C.DIR],pla:['PLA',C.PLA],mod:['MOD',C.MOD]}[k];return DICTS[map[0]][r[map[1]]];}
 function activeRows(){const{reg,fil,dis,coo,dir,pla,mod,grp,ini,fim}=state;
@@ -287,46 +290,60 @@ const statRow=(l,v)=>`<div class="statrow"><span class="lb">${l}</span><span cla
 const table3=(hs,b)=>`<table><thead><tr>${hs.map((h,i)=>`<th class="${i>=2?'num':''}" ${i===0?'style="width:32px"':''}>${h}</th>`).join('')}</tr></thead><tbody>${b.join('')||`<tr><td colspan="${hs.length}" class="empty">Sem dados no filtro</td></tr>`}</tbody></table>`;
 function slaTable(title,arr){const b=arr.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.at)}</td><td class="num" style="width:80px">${miniBar(x.sla,1,slaColor(x.sla))}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${fmtPct(x.sla)}</span></td></tr>`).join('');
  return `<div class="card"><div class="hd"><h3>${title}</h3><span class="tag">${arr.length}</span></div><div class="scroll" style="padding:2px 6px"><table><thead><tr><th>${title.includes('Coordenador')?'Coordenador':'Distrital'}</th><th class="num">Ped.</th><th class="num">No prazo</th><th class="num">Atrasos</th><th></th><th class="num">NS</th></tr></thead><tbody>${b||`<tr><td colspan="6" class="empty">Sem dados</td></tr>`}</tbody></table></div></div>`;}
+function modalCard(mod){
+ const rows=mod.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num">${fmtInt(x.np)}</td><td class="num">${fmtInt(x.at)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('');
+ const tot=mod.reduce((a,x)=>({n:a.n+x.n,np:a.np+x.np,at:a.at+x.at}),{n:0,np:0,at:0}),totSla=pct(tot.np,tot.n);
+ const totRow=mod.length?`<tr style="font-weight:700"><td>Total</td><td class="num">${fmtInt(tot.n)}</td><td class="num">${fmtInt(tot.np)}</td><td class="num">${fmtInt(tot.at)}</td><td class="num"><span class="pill ${pillClass(totSla)}">${tot.n?fmtPct(totSla):'—'}</span></td></tr>`:'';
+ return `<div class="card"><div class="hd"><h3>Nível de serviço por modalidade</h3></div><div class="scroll" style="padding:2px 6px"><table><thead><tr><th>Modalidade</th><th class="num">Pedidos</th><th class="num">No prazo</th><th class="num">Atrasos</th><th class="num">SLA</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sem dados na semana</td></tr>'}${totRow}</tbody></table></div></div>`;}
 function renderSuspect(s){if(!s.length)return `<div class="card"><div class="bd empty">Nenhum padrão suspeito de finalização no filtro atual.</div></div>`;
  const b=s.slice(0,40).map((d,i)=>{const t=[];if(d.worst10>=5)t.push(`<span class="rtag ${d.worst10>=15?'r':''}">rajada · ${d.worst10} em 10min</span>`);if(d.worst2>=3)t.push(`<span class="rtag ${d.worst2>=10?'r':''}">simultâneas · ${d.worst2} em 2min</span>`);if(d.idle>0)t.push(`<span class="rtag">ocioso→rajada · ${d.idle}d</span>`);
   return `<tr class="${d.worst10>=15||d.worst2>=10?'warnrow':''}"><td><span class="rk">${i+1}</span></td><td>${esc(d.nm)}<div style="font-size:10px;color:var(--muted)">${esc(d.plat)}</div></td><td>${esc(d.filial)||'—'}${d.nfil>1?`<div style="font-size:10px;color:var(--muted)">${d.nfil} filiais</div>`:''}</td><td class="num">${d.total}</td><td class="num">${d.days}</td><td><div class="reasons">${t.join('')}</div></td><td class="num mono">${d.score}</td></tr>`;}).join('');
  return `<div class="card"><div class="hd"><h3>Entregadores com padrão atípico de finalização</h3><span class="tag">${s.length} sinalizados</span></div><div style="font-size:11.5px;color:var(--muted);padding:10px 15px">Sinais: rajada de entregas na mesma janela, finalizações quase simultâneas, ou ocioso o dia todo e depois várias em pouco tempo. Indícios para cobrança direcionada — não conclusões.</div><div class="scroll"><table><thead><tr><th style="width:32px">#</th><th>Entregador</th><th>Filial</th><th class="num">Entregas</th><th class="num">Dias</th><th>Sinais</th><th class="num">Score</th></tr></thead><tbody>${b}</tbody></table></div></div>`;}
-function weeklyRapida(rows){const by={};for(const r of rows){const cm=r[C.CRIA];if(cm<0)continue;const d=dateStr(minToDate(cm));const o=by[d]||(by[d]={sep:0,sepN:0,np:0,tot:0});
+function weekDays(weekStart){const out=[];for(let i=0;i<7;i++)out.push(shiftDate(weekStart,i));return out;}
+function weekBounds(weekStart){const startMin=Math.floor((new Date(weekStart+'T00:00:00')-EPOCH)/60000);return {startMin,endMin:startMin+7*1440};}
+function filterWeek(rows,weekStart){const {startMin,endMin}=weekBounds(weekStart);return rows.filter(r=>{const cm=r[C.CRIA];return cm>=startMin&&cm<endMin;});}
+function weekSeries(rows,weekStart){const days=weekDays(weekStart),by={};
+ for(const r of rows){const cm=r[C.CRIA];if(cm<0)continue;const d=dateStr(minToDate(cm));if(!days.includes(d))continue;const o=by[d]||(by[d]={sep:0,sepN:0,np:0,tot:0});
   if(r[C.ST]>=0){o.tot++;if(r[C.ST]===0)o.np++;}
   if(r[C.RAP]===1&&r[C.TSEP]>=0){o.sep+=r[C.TSEP];o.sepN++;}}
- return Object.keys(by).sort().map(d=>({d,sepMin:by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d].tot?by[d].np/by[d].tot:null,n:by[d].tot}));}
-function chartRapida(series){
- if(!series.length)return '<div class="empty">Sem pedidos de Entrega Rápida no filtro atual.</div>';
- const W=360,H=175,ml=22,mr=10,mt=26,mb=48,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(30,step*0.55);
+ return days.map(d=>({d,sepMin:by[d]&&by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d]&&by[d].tot?by[d].np/by[d].tot:null,n:by[d]?by[d].tot:0}));}
+function chartWeekly(series){
+ const maxSep=Math.max(0,...series.map(s=>s.sepMin||0));
+ const niceMax=Math.max(30,Math.ceil(maxSep/5)*5);
+ const W=560,H=230,ml=32,mr=34,mt=14,mb=46,ih=H-mt-mb,iw=W-ml-mr,n=series.length,step=iw/n,bw=Math.min(34,step*0.5);
  const x=i=>ml+step*i+step/2;
- let bars='',labels='';
- series.forEach((s,i)=>{const cx=x(i),sla=s.sla||0,h=sla*ih,y=mt+ih-h;
-  bars+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="var(--amber)"/>`;
-  labels+=`<text x="${cx.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${s.n?slaColor(sla):'var(--muted)'}">${s.n?fmtPct(sla):'—'}</text>`;
-  if(s.sepMin!=null)labels+=`<text x="${cx.toFixed(1)}" y="${(mt+ih+14).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)"><tspan fill="var(--green)">■</tspan> ${s.sepMin.toFixed(1).replace('.',',')}min</text>`;
-  labels+=`<text x="${cx.toFixed(1)}" y="${(mt+ih+28).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)">${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
- return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter">${bars}${labels}</svg>`;}
+ const yLeft=val=>mt+ih-(val/niceMax)*ih;
+ const yRight=p=>mt+ih-p*ih;
+ let grid='',bars='',axisL='',axisR='',labels='',dots='',line='',pts=[];
+ for(let g=0;g<=6;g++){const gv=niceMax*g/6,y=yLeft(gv);
+  grid+=`<line x1="${ml}" y1="${y.toFixed(1)}" x2="${(W-mr).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line2)" stroke-width="1"/>`;
+  axisL+=`<text x="${(ml-6).toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Math.round(gv)}</text>`;}
+ [0,20,40,60,80,100].forEach(p=>{const y=yRight(p/100);axisR+=`<text x="${(W-mr+6).toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="start" font-size="9" fill="var(--muted)">${p}</text>`;});
+ series.forEach((s,i)=>{const cx=x(i);
+  if(s.sepMin!=null){const y=yLeft(s.sepMin);
+   bars+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(mt+ih-y).toFixed(1)}" rx="3" fill="var(--heading)"/>`;
+   bars+=`<text x="${cx.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--heading)">${s.sepMin.toFixed(1).replace('.',',')}min</text>`;}
+  if(s.n>0)pts.push([cx,yRight(s.sla||0),s.sla||0]);
+  labels+=`<text x="${cx.toFixed(1)}" y="${(H-mb+18).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${WD[i]} ${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
+ if(pts.length>1)line=`<path d="M${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')}" fill="none" stroke="var(--red)" stroke-width="2"/>`;
+ pts.forEach(([cx,cy,sla])=>{dots+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.5" fill="var(--red)"/>`;
+  dots+=`<text x="${cx.toFixed(1)}" y="${(cy-8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--red)">${fmtPct(sla)}</text>`;});
+ return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter">${grid}${bars}${line}${dots}${axisL}${axisR}${labels}</svg>`;}
 function monthRange(){const now=new Date(),y=now.getFullYear(),mo=now.getMonth();
  const startMin=Math.floor((new Date(y,mo,1)-EPOCH)/60000),endMin=Math.floor((new Date(y,mo+1,1)-EPOCH)/60000);
  let label=now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});label=label.charAt(0).toUpperCase()+label.slice(1);
  return {startMin,endMin,label};}
-function computeMonthSLA(){const {startMin,endMin,label}=monthRange();let suc=0,np=0,at=0,ss=0,sn=0;
- for(const r of ROWS){const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)continue;suc++;if(r[C.ST]===0)np++;else if(r[C.ST]===1)at++;if(r[C.RAP]===1&&r[C.TSEP]>=0){ss+=r[C.TSEP];sn++;}}
+function computeMonthSLA(pla){const {startMin,endMin,label}=monthRange();let suc=0,np=0,at=0,ss=0,sn=0;
+ for(const r of ROWS){if(pla&&valOf('pla',r)!==pla)continue;const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)continue;suc++;if(r[C.ST]===0)np++;else if(r[C.ST]===1)at++;if(r[C.RAP]===1&&r[C.TSEP]>=0){ss+=r[C.TSEP];sn++;}}
  return {suc,np,at,sla:pct(np,suc),avgSep:sn?ss/sn:null,label};}
-function gaugeSLA(g){
- if(!g.suc)return '<div class="empty">Sem pedidos no mês atual.</div>';
- const W=360,H=175,cx=W/2,cy=128,r=92,T=24;
- const pol=ang=>{const a=(ang-90)*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];};
- const arc=(a0,a1)=>{const[x1,y1]=pol(a0),[x2,y2]=pol(a1),large=(a1-a0)<=180?0:1;return `M${x1.toFixed(1)},${y1.toFixed(1)} A${r.toFixed(1)},${r.toFixed(1)} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)}`;};
- const split=-90+180*g.sla,[lx,ly]=pol(-90),[rx,ry]=pol(90);
+function donutSLA(g){
+ if(!g.suc)return '<div class="empty" style="padding:30px 6px">Sem pedidos no mês atual.</div>';
+ const W=170,H=170,cx=85,cy=85,r=64,T=18,c=2*Math.PI*r,dash=c*g.sla;
  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" font-family="Inter">
-  <path d="${arc(-90,split)}" fill="none" stroke="var(--green)" stroke-width="${T}" stroke-linecap="round"/>
-  <path d="${arc(split,90)}" fill="none" stroke="var(--red)" stroke-width="${T}" stroke-linecap="round"/>
-  <text x="${(lx-16).toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="end" font-size="13" font-weight="700" fill="var(--green)">${fmtPct(g.sla)}</text>
-  <text x="${(rx+16).toFixed(1)}" y="${(ry+3).toFixed(1)}" text-anchor="start" font-size="13" font-weight="700" fill="var(--red)">${fmtPct(1-g.sla)}</text>
-  <text x="${cx}" y="${cy-16}" text-anchor="middle" font-size="28" font-weight="800" fill="var(--heading)">${fmtPct(g.sla)}</text>
-  <text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="11" fill="var(--muted)">nível de serviço</text>
-  <text x="${cx}" y="${H-14}" text-anchor="middle" font-size="11.5" fill="var(--muted)">Média de separação (rápida): <tspan font-weight="700" fill="var(--heading)">${dur(g.avgSep)}</tspan></text>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--redbg)" stroke-width="${T}"/>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--green)" stroke-width="${T}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"/>
+  <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="22" font-weight="800" fill="var(--heading)">${fmtPct(g.sla)}</text>
+  <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="10" fill="var(--muted)">nível de serviço</text>
  </svg>`;}
 function render(){
  if(!ROWS.length){document.getElementById('board').innerHTML=`<div class="bigempty"><h2>Nenhum dado carregado</h2><p>Clique em <b>Atualizar dados</b> e envie os 2 arquivos do dia (VTEX Report e Abbiamo ORDERS) e, uma vez, a base de gestores (aba Lojas em CSV).</p><button class="btn primary" onclick="openUpload()">Atualizar dados</button></div>`;const fc=document.getElementById('fcountVal');if(fc)fc.innerHTML='';return;}
@@ -341,12 +358,14 @@ function render(){
  const filRapView=(boardState.filRap==='melhor'
    ?m.filRapAll.filter(x=>x.n>=avgFilRapN).sort((a,b)=>a.avg-b.avg)
    :m.filRapAll.slice().sort((a,b)=>b.avg-a.avg)).slice(0,10);
+ if(!chartState.weekStart)chartState.weekStart=mondayOf(dateStr(new Date()));
  const wkRows=chartState.pla?rows.filter(r=>valOf('pla',r)===chartState.pla):rows;
- const wkFull=weeklyRapida(wkRows);const wkMin=wkFull.length?wkFull[0].d:'';const wkMax=wkFull.length?wkFull[wkFull.length-1].d:'';
- const wkDefFrom=wkMax?(shiftDate(wkMax,-6)<wkMin?wkMin:shiftDate(wkMax,-6)):wkMin;
- const wkFrom=chartState.ini||wkDefFrom,wkTo=chartState.fim||wkMax;
- const wkSeries=wkFull.filter(s=>(!wkFrom||s.d>=wkFrom)&&(!wkTo||s.d<=wkTo));
- const gMonth=computeMonthSLA();
+ const wkSeries=weekSeries(wkRows,chartState.weekStart);
+ const wkMod=orderMod(compute(filterWeek(wkRows,chartState.weekStart)).mod);
+ const wkSunday=shiftDate(chartState.weekStart,6);
+ const wkIsCurrent=chartState.weekStart===mondayOf(dateStr(new Date()));
+ const wkLabel=(wkIsCurrent?'Vigente · ':'')+'Semana '+isoWeekNum(chartState.weekStart)+' · '+chartState.weekStart.slice(8,10)+'/'+chartState.weekStart.slice(5,7)+' a '+wkSunday.slice(8,10)+'/'+wkSunday.slice(5,7);
+ const gMonth=computeMonthSLA(chartState.pla);
  document.getElementById('board').innerHTML=`
  <section class="slide" data-slide="Indicadores gerais"><div class="sechd"><span class="n">1</span><h2>Indicadores gerais</h2><div class="rule"></div></div>
   <div class="grid cols-3">
@@ -369,13 +388,13 @@ function render(){
   <div style="height:16px"></div>
   <div class="grid cols-2">
    <div class="card"><div class="hd"><h3>Sucessos entregues por plataforma</h3></div><div class="bd" style="padding:4px 6px"><table><thead><tr><th>Plataforma</th><th class="num">Entregues</th><th style="width:90px"></th><th class="num">SLA</th></tr></thead><tbody>${platSuc.map(x=>{const s=pct(x.suc-x.atr,x.suc);return `<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.suc)}</td><td>${miniBar(x.suc,maxSuc,'var(--accent)')}</td><td class="num"><span class="pill ${pillClass(s)}">${fmtPct(s)}</span></td></tr>`;}).join('')}</tbody></table></div></div>
-   <div class="card"><div class="hd"><h3>Provável motivo de atraso</h3></div><div class="bd">${statRow('Falha na Separação',`${fmtInt(m.motSep)} · ${m.atraso?fmtPct(m.motSep/m.atraso):'—'}`)}${statRow('Falha na Entrega',`${fmtInt(m.motEnt)} · ${m.atraso?fmtPct(m.motEnt/m.atraso):'—'}`)}<div style="font-size:11px;color:var(--muted);margin-top:8px">Separação = atraso já na loja (sep. &gt; 15 min). Entrega = após a coleta.</div>
-   <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line2)"><div style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--heading);margin-bottom:4px">Nível de serviço por modalidade</div><table><thead><tr><th>Modalidade</th><th class="num">Ped.</th><th class="num">NS</th></tr></thead><tbody>${m.mod.map(x=>`<tr><td>${esc(x.nm)}</td><td class="num">${fmtInt(x.n)}</td><td class="num"><span class="pill ${pillClass(x.sla)}">${x.n?fmtPct(x.sla):'—'}</span></td></tr>`).join('')||'<tr><td colspan="3" class="empty">Sem dados no filtro</td></tr>'}</tbody></table></div></div></div>
+   <div class="card"><div class="hd"><h3>Provável motivo de atraso</h3></div><div class="bd">${statRow('Falha na Separação',`${fmtInt(m.motSep)} · ${m.atraso?fmtPct(m.motSep/m.atraso):'—'}`)}${statRow('Falha na Entrega',`${fmtInt(m.motEnt)} · ${m.atraso?fmtPct(m.motEnt/m.atraso):'—'}`)}<div style="font-size:11px;color:var(--muted);margin-top:8px">Separação = atraso já na loja (sep. &gt; 15 min). Entrega = após a coleta.</div></div></div>
   </div>
   <div style="height:16px"></div>
-  <div class="grid cols-2">
-   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD geral</h3><span class="tag">separação: rápida exc. São João</span><div class="rangepick"><select id="wkPla" onchange="onWkPlaChange()"><option value="">Todas plataformas</option>${optionsFor('pla').map(o=>`<option value="${esc(o)}" ${chartState.pla===o?'selected':''}>${esc(o)}</option>`).join('')}</select><input type="date" id="wkIni" min="${wkMin}" max="${wkMax}" value="${wkFrom}" onchange="onWkDate('ini')"><span>até</span><input type="date" id="wkFim" min="${wkMin}" max="${wkMax}" value="${wkTo}" onchange="onWkDate('fim')"><button type="button" onclick="clearWkDate()">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartRapida(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--green);border-radius:2px;vertical-align:-1px"></span> Média de Separação</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--amber);border-radius:2px;vertical-align:-1px"></span> % No prazo (OTD)</span></div></div></div>
-   <div class="card"><div class="hd"><h3>Nível de serviço acumulado</h3><span class="tag">${gMonth.label}</span></div><div class="bd" style="text-align:center">${gaugeSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos no mês</div></div></div>
+  <div class="grid cols-evo">
+   ${modalCard(wkMod)}
+   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD e separação${chartState.pla?' ('+esc(chartState.pla)+')':''}</h3><div class="rangepick" style="margin-left:auto;flex-wrap:wrap"><select id="wkPla" onchange="onWkPlaChange()"><option value="">Todas plataformas</option>${optionsFor('pla').map(o=>`<option value="${esc(o)}" ${chartState.pla===o?'selected':''}>${esc(o)}</option>`).join('')}</select><button type="button" onclick="onWeekNav(-1)" title="Semana anterior">◀</button><b style="font-size:11px;color:var(--heading);white-space:nowrap">${wkLabel}</b><button type="button" onclick="onWeekNav(1)" title="Próxima semana">▶</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div></div></div>
+   <div class="card"><div class="hd"><h3>Nível de serviço — mês vigente</h3></div><div class="bd" style="text-align:center">${donutSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos<br>${gMonth.label}</div></div></div>
   </div>
  </section>
  <section class="slide" data-slide="Nivel de servico por gestor"><div class="sechd"><span class="n">3</span><h2>Nível de serviço por gestor</h2><div class="rule"></div></div>
@@ -411,13 +430,8 @@ const THEME_SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const THEME_MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>';
 function updateThemeIcon(){const btn=document.getElementById('btnTheme');if(!btn)return;const dark=document.documentElement.getAttribute('data-theme')==='dark';btn.innerHTML=dark?THEME_SUN:THEME_MOON;btn.title=dark?'Mudar para tema claro':'Mudar para tema escuro';}
 function toggleTheme(){const dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark){document.documentElement.removeAttribute('data-theme');localStorage.setItem('theme','light');}else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('theme','dark');}updateThemeIcon();}
-function onWkDate(which){const elIni=document.getElementById('wkIni'),elFim=document.getElementById('wkFim');let ini=elIni.value,fim=elFim.value;const wkMin=elIni.min,wkMax=elIni.max;
- if(fim<ini){if(which==='ini')fim=ini;else ini=fim;}
- if(Math.round((new Date(fim+'T00:00:00')-new Date(ini+'T00:00:00'))/86400000)+1>7){if(which==='ini')fim=shiftDate(ini,6);else ini=shiftDate(fim,-6);}
- if(wkMin&&ini<wkMin)ini=wkMin;if(wkMax&&fim>wkMax)fim=wkMax;
- chartState.ini=ini;chartState.fim=fim;render();}
+function onWeekNav(delta){chartState.weekStart=shiftDate(chartState.weekStart,delta*7);render();}
 function onWkPlaChange(){chartState.pla=v('wkPla');render();}
-function clearWkDate(){chartState.ini='';chartState.fim='';render();}
 function clearFilters(){FKEYS.forEach(([k])=>state[k].clear());state.ini='';state.fim='';setActiveQuick(null);buildFilters();render();}
 function openBase(){document.getElementById('ovlBase').classList.add('show');renderBase('');}
 function renderBase(q){q=(q||'').toLowerCase();const rows=LOJAS.filter(l=>!q||String(l.cod).includes(q)||String(l.filial||'').toLowerCase().includes(q)).slice(0,400);
