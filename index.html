@@ -38,6 +38,7 @@ h1,h2,h3{font-family:Archivo,sans-serif;margin:0}button{font-family:inherit;curs
 .ms-btn .badge{flex:0 0 auto;background:var(--accentbg);color:var(--accent);font-weight:700;font-size:10px;border-radius:10px;padding:1px 7px}
 .ms-pop{position:absolute;top:58px;left:0;z-index:60;width:248px;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 30px rgba(16,32,46,.18);padding:8px;display:none}
 .ms-pop.show{display:block}
+.ms.compact{display:inline-flex}.ms.compact .ms-btn{height:24px;min-width:118px;max-width:170px;padding:0 7px;font-size:11px;border-radius:6px}.ms.compact .ms-pop{top:28px;width:210px}
 .ms-search{width:100%;border:1px solid var(--line2);border-radius:6px;padding:6px 8px;font-size:12px;margin-bottom:6px}
 .ms-list{max-height:230px;overflow:auto}
 .ms-hint{font-size:11px;color:var(--muted);padding:4px 6px}
@@ -214,7 +215,8 @@ const EPOCH=new Date(2026,0,1);
 let DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]}, ROWS=[], GEN='—';
 let LOJAS=[]; try{LOJAS=JSON.parse(localStorage.getItem('lojasBase')||'[]')}catch(e){}
 const state={reg:new Set(),fil:new Set(),dis:new Set(),coo:new Set(),dir:new Set(),pla:new Set(),mod:new Set(),grp:new Set(),ini:'',fim:''};
-const chartState={weekStart:'',pla:''};
+const chartState={weekStart:'',pla:new Set()};
+let wkPlaPopOpen=false;
 const boardState={filAtr:'pior',filRap:'pior'};
 function toggleBoardSort(k){boardState[k]=boardState[k]==='pior'?'melhor':'pior';render();}
 const FKEYS=[['reg','Regional','REG',C.REG],['fil','Filial','FIL',C.FIL],['dis','Distrital','DIS',C.DIS],['coo','Coordenador','COO',C.COO],['dir','Diretor','DIR',C.DIR],['pla','Plataforma','PLA',C.PLA],['mod','Modalidade','MOD',C.MOD],['grp','Grupo entrega','GRP',C.GRP]];
@@ -334,7 +336,7 @@ function monthRange(){const now=new Date(),y=now.getFullYear(),mo=now.getMonth()
  let label=now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});label=label.charAt(0).toUpperCase()+label.slice(1);
  return {startMin,endMin,label};}
 function computeMonthSLA(pla){const {startMin,endMin,label}=monthRange();let suc=0,np=0,at=0,ss=0,sn=0;
- for(const r of ROWS){if(pla&&valOf('pla',r)!==pla)continue;const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)continue;suc++;if(r[C.ST]===0)np++;else if(r[C.ST]===1)at++;if(r[C.RAP]===1&&r[C.TSEP]>=0){ss+=r[C.TSEP];sn++;}}
+ for(const r of ROWS){if(pla&&pla.size&&!pla.has(valOf('pla',r)))continue;const cm=r[C.CRIA];if(cm<startMin||cm>=endMin)continue;suc++;if(r[C.ST]===0)np++;else if(r[C.ST]===1)at++;if(r[C.RAP]===1&&r[C.TSEP]>=0){ss+=r[C.TSEP];sn++;}}
  return {suc,np,at,sla:pct(np,suc),avgSep:sn?ss/sn:null,label};}
 function donutSLA(g){
  if(!g.suc)return '<div class="empty" style="padding:30px 6px">Sem pedidos no mês atual.</div>';
@@ -359,12 +361,15 @@ function render(){
    ?m.filRapAll.filter(x=>x.n>=avgFilRapN).sort((a,b)=>a.avg-b.avg)
    :m.filRapAll.slice().sort((a,b)=>b.avg-a.avg)).slice(0,10);
  if(!chartState.weekStart)chartState.weekStart=mondayOf(dateStr(new Date()));
- const wkRows=chartState.pla?rows.filter(r=>valOf('pla',r)===chartState.pla):rows;
+ const wkRows=chartState.pla.size?rows.filter(r=>chartState.pla.has(valOf('pla',r))):rows;
  const wkSeries=weekSeries(wkRows,chartState.weekStart);
  const wkMod=orderMod(compute(filterWeek(wkRows,chartState.weekStart)).mod);
  const wkSunday=shiftDate(chartState.weekStart,6);
  const wkIsCurrent=chartState.weekStart===mondayOf(dateStr(new Date()));
  const wkLabel=(wkIsCurrent?'Vigente · ':'')+'Semana '+isoWeekNum(chartState.weekStart)+' · '+chartState.weekStart.slice(8,10)+'/'+chartState.weekStart.slice(5,7)+' a '+wkSunday.slice(8,10)+'/'+wkSunday.slice(5,7);
+ const wkPlaArr=[...chartState.pla];
+ const wkPlaLbl=wkPlaArr.length===0?'Todas plataformas':wkPlaArr.length===1?wkPlaArr[0]:wkPlaArr.length+' plataformas';
+ const wkPlaSuffix=wkPlaArr.length===1?' ('+esc(wkPlaArr[0])+')':wkPlaArr.length>1?' ('+wkPlaArr.length+' plataformas)':'';
  const gMonth=computeMonthSLA(chartState.pla);
  document.getElementById('board').innerHTML=`
  <section class="slide" data-slide="Indicadores gerais"><div class="sechd"><span class="n">1</span><h2>Indicadores gerais</h2><div class="rule"></div></div>
@@ -393,7 +398,11 @@ function render(){
   <div style="height:16px"></div>
   <div class="grid cols-evo">
    ${modalCard(wkMod)}
-   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD e separação${chartState.pla?' ('+esc(chartState.pla)+')':''}</h3><div class="rangepick" style="margin-left:auto;flex-wrap:wrap"><select id="wkPla" onchange="onWkPlaChange()"><option value="">Todas plataformas</option>${optionsFor('pla').map(o=>`<option value="${esc(o)}" ${chartState.pla===o?'selected':''}>${esc(o)}</option>`).join('')}</select><button type="button" onclick="onWeekNav(-1)" title="Semana anterior">◀</button><b style="font-size:11px;color:var(--heading);white-space:nowrap">${wkLabel}</b><button type="button" onclick="onWeekNav(1)" title="Próxima semana">▶</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div></div></div>
+   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD e separação${wkPlaSuffix}</h3><div class="rangepick" style="margin-left:auto;flex-wrap:wrap">
+    <div class="ms compact"><button type="button" class="ms-btn" onclick="wkPlaOpenPop(event)"><span class="lbl">${esc(wkPlaLbl)}</span>${wkPlaArr.length>1?`<span class="badge">${wkPlaArr.length}</span>`:''}<span class="chev">▾</span></button>
+     <div class="ms-pop${wkPlaPopOpen?' show':''}"><div class="ms-list">${optionsFor('pla').map(o=>`<label class="ms-opt"><input type="checkbox" value="${esc(o)}" ${chartState.pla.has(o)?'checked':''} onchange="wkPlaToggleSel(this.value,this.checked)"><span>${esc(o)}</span></label>`).join('')||'<div class="empty">Sem opções</div>'}</div>
+     <div class="ms-actions"><button type="button" onclick="wkPlaClearSel()">Limpar</button><button type="button" onclick="wkPlaClosePop()">Fechar</button></div></div></div>
+    <button type="button" onclick="onWeekNav(-1)" title="Semana anterior">◀</button><b style="font-size:11px;color:var(--heading);white-space:nowrap">${wkLabel}</b><button type="button" onclick="onWeekNav(1)" title="Próxima semana">▶</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div></div></div>
    <div class="card"><div class="hd"><h3>Nível de serviço — mês vigente</h3></div><div class="bd" style="text-align:center">${donutSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos<br>${gMonth.label}</div></div></div>
   </div>
  </section>
@@ -431,7 +440,10 @@ const THEME_MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function updateThemeIcon(){const btn=document.getElementById('btnTheme');if(!btn)return;const dark=document.documentElement.getAttribute('data-theme')==='dark';btn.innerHTML=dark?THEME_SUN:THEME_MOON;btn.title=dark?'Mudar para tema claro':'Mudar para tema escuro';}
 function toggleTheme(){const dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark){document.documentElement.removeAttribute('data-theme');localStorage.setItem('theme','light');}else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('theme','dark');}updateThemeIcon();}
 function onWeekNav(delta){chartState.weekStart=shiftDate(chartState.weekStart,delta*7);render();}
-function onWkPlaChange(){chartState.pla=v('wkPla');render();}
+function wkPlaOpenPop(e){e.stopPropagation();wkPlaPopOpen=!wkPlaPopOpen;render();}
+function wkPlaToggleSel(val,on){if(on)chartState.pla.add(val);else chartState.pla.delete(val);render();}
+function wkPlaClearSel(){chartState.pla.clear();render();}
+function wkPlaClosePop(){wkPlaPopOpen=false;render();}
 function clearFilters(){FKEYS.forEach(([k])=>state[k].clear());state.ini='';state.fim='';setActiveQuick(null);buildFilters();render();}
 function openBase(){document.getElementById('ovlBase').classList.add('show');renderBase('');}
 function renderBase(q){q=(q||'').toLowerCase();const rows=LOJAS.filter(l=>!q||String(l.cod).includes(q)||String(l.filial||'').toLowerCase().includes(q)).slice(0,400);
@@ -444,7 +456,7 @@ function reResolve(){const byCod={};LOJAS.forEach(l=>byCod[String(l.cod)]=l);con
 function openUpload(){document.getElementById('ovlUpload').classList.add('show');document.getElementById('lojasOk').textContent=LOJAS.length?`✓ ${LOJAS.length} filiais salvas`:'';}
 function closeOvl(id){document.getElementById(id).classList.remove('show');}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
-window.addEventListener('click',e=>{if(e.target.classList.contains('ovl'))e.target.classList.remove('show');if(!e.target.closest('.ms'))document.querySelectorAll('.ms-pop').forEach(p=>p.classList.remove('show'));});
+window.addEventListener('click',e=>{if(e.target.classList.contains('ovl'))e.target.classList.remove('show');if(!e.target.closest('.ms')){document.querySelectorAll('.ms-pop').forEach(p=>p.classList.remove('show'));wkPlaPopOpen=false;}});
 function log(m){const b=document.getElementById('logbox');b.style.display='block';b.textContent+=m+'\n';b.scrollTop=b.scrollHeight;}
 function setProg(p){const e=document.getElementById('prog');e.style.display='block';e.querySelector('i').style.width=(p*100).toFixed(0)+'%';}
 function pdate(s){if(!s)return null;s=String(s).trim().replace(/Z$/,'').trim();if(!s)return null;s=s.replace('T',' ');
