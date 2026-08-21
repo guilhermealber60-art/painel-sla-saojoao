@@ -2,7 +2,7 @@
 
 Painel de nível de serviço (SLA) do e-commerce, para acompanhamento diário e cobranças direcionadas. É um site estático de um único arquivo (`index.html`) que faz todos os cálculos no navegador — nenhum dado é enviado para servidores.
 
-**Fontes de dados:** VTEX (Report) · Abbiamo (Orders) · Abbiamo (Events).
+**Fontes de dados:** VTEX (Report) · Abbiamo (Orders — inclui as datas de despacho/coleta/entrega, então não é preciso um arquivo Events separado).
 
 ---
 
@@ -45,7 +45,7 @@ Se precisar começar um período do zero (ex.: virada de mês), use o botão **A
 **Opção recomendada — publicar direto do painel, sem git:**
 
 1. No painel, clique em **Config. publicação** (ícone de engrenagem) e cole um token de acesso do GitHub (veja como criar abaixo). Isso fica salvo só no seu navegador — faça isso uma vez em cada computador/navegador que for usar.
-2. Clique em **Atualizar dados** e envie os 3 CSVs do dia (VTEX Report, Abbiamo ORDERS, Abbiamo EVENTS). A base de gestores (`Lojas`) já vem carregada; só reenvie se a estrutura mudar.
+2. Clique em **Atualizar dados** e envie os 2 CSVs do dia (VTEX Report, Abbiamo ORDERS). A base de gestores (`Lojas`) já vem carregada; só reenvie se a estrutura mudar.
 3. Clique em **Publicar no GitHub**. Pronto — grava `data/snapshot.json` e `data/lojas.json` direto no repositório. O site atualiza para todos em alguns minutos.
 
 **Como criar o token:** em [github.com/settings/tokens](https://github.com/settings/tokens) → **Fine-grained tokens** → **Generate new token** → em **Repository access**, escolha **Only select repositories** e marque `painel-sla-saojoao` → em **Permissions**, dê **Contents: Read and write** (nenhuma outra) → defina uma expiração → gere e cole no painel. Um token assim só consegue mexer nesse repositório, nada além disso.
