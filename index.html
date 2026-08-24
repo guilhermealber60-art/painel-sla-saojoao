@@ -215,7 +215,7 @@ const EPOCH=new Date(2026,0,1);
 let DICTS={FIL:[],ENT:[],PLA:[],MOD:[],COO:[],DIS:[],REG:[],DIR:[]}, ROWS=[], GEN='—';
 let LOJAS=[]; try{LOJAS=JSON.parse(localStorage.getItem('lojasBase')||'[]')}catch(e){}
 const state={reg:new Set(),fil:new Set(),dis:new Set(),coo:new Set(),dir:new Set(),pla:new Set(),mod:new Set(),grp:new Set(),ini:'',fim:''};
-const chartState={weekStart:'',pla:new Set()};
+const chartState={ini:'',fim:'',pla:new Set()};
 let wkPlaPopOpen=false;
 const boardState={filAtr:'pior',filRap:'pior'};
 function toggleBoardSort(k){boardState[k]=boardState[k]==='pior'?'melhor':'pior';render();}
@@ -230,9 +230,8 @@ const pillClass=x=>x>=.9?'g':x>=.8?'a':'r';
 const minToDate=m=>m<0?null:new Date(EPOCH.getTime()+m*60000);
 const dateStr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const shiftDate=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return dateStr(d);};
-const WD=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-function mondayOf(ds){const d=new Date(ds+'T00:00:00');const dow=(d.getDay()+6)%7;return shiftDate(ds,-dow);}
-function isoWeekNum(ds){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+4-(d.getDay()||7));const yearStart=new Date(d.getFullYear(),0,1);return Math.ceil((((d-yearStart)/86400000)+1)/7);}
+const WD=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const wdLabel=ds=>WD[new Date(ds+'T00:00:00').getDay()];
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function valOf(k,r){if(k==='grp')return r[C.GRP]===1?'Uber+99':'Outros';const map={reg:['REG',C.REG],fil:['FIL',C.FIL],dis:['DIS',C.DIS],coo:['COO',C.COO],dir:['DIR',C.DIR],pla:['PLA',C.PLA],mod:['MOD',C.MOD]}[k];return DICTS[map[0]][r[map[1]]];}
 function activeRows(){const{reg,fil,dis,coo,dir,pla,mod,grp,ini,fim}=state;
@@ -301,11 +300,11 @@ function renderSuspect(s){if(!s.length)return `<div class="card"><div class="bd 
  const b=s.slice(0,40).map((d,i)=>{const t=[];if(d.worst10>=5)t.push(`<span class="rtag ${d.worst10>=15?'r':''}">rajada · ${d.worst10} em 10min</span>`);if(d.worst2>=3)t.push(`<span class="rtag ${d.worst2>=10?'r':''}">simultâneas · ${d.worst2} em 2min</span>`);if(d.idle>0)t.push(`<span class="rtag">ocioso→rajada · ${d.idle}d</span>`);
   return `<tr class="${d.worst10>=15||d.worst2>=10?'warnrow':''}"><td><span class="rk">${i+1}</span></td><td>${esc(d.nm)}<div style="font-size:10px;color:var(--muted)">${esc(d.plat)}</div></td><td>${esc(d.filial)||'—'}${d.nfil>1?`<div style="font-size:10px;color:var(--muted)">${d.nfil} filiais</div>`:''}</td><td class="num">${d.total}</td><td class="num">${d.days}</td><td><div class="reasons">${t.join('')}</div></td><td class="num mono">${d.score}</td></tr>`;}).join('');
  return `<div class="card"><div class="hd"><h3>Entregadores com padrão atípico de finalização</h3><span class="tag">${s.length} sinalizados</span></div><div style="font-size:11.5px;color:var(--muted);padding:10px 15px">Sinais: rajada de entregas na mesma janela, finalizações quase simultâneas, ou ocioso o dia todo e depois várias em pouco tempo. Indícios para cobrança direcionada — não conclusões.</div><div class="scroll"><table><thead><tr><th style="width:32px">#</th><th>Entregador</th><th>Filial</th><th class="num">Entregas</th><th class="num">Dias</th><th>Sinais</th><th class="num">Score</th></tr></thead><tbody>${b}</tbody></table></div></div>`;}
-function weekDays(weekStart){const out=[];for(let i=0;i<7;i++)out.push(shiftDate(weekStart,i));return out;}
-function weekBounds(weekStart){const startMin=Math.floor((new Date(weekStart+'T00:00:00')-EPOCH)/60000);return {startMin,endMin:startMin+7*1440};}
-function filterWeek(rows,weekStart){const {startMin,endMin}=weekBounds(weekStart);return rows.filter(r=>{const cm=r[C.CRIA];return cm>=startMin&&cm<endMin;});}
-function weekSeries(rows,weekStart){const days=weekDays(weekStart),by={};
- for(const r of rows){const cm=r[C.CRIA];if(cm<0)continue;const d=dateStr(minToDate(cm));if(!days.includes(d))continue;const o=by[d]||(by[d]={sep:0,sepN:0,np:0,tot:0});
+function rangeDays(ini,fim){const out=[];let d=ini;let guard=0;while(d<=fim&&guard++<370){out.push(d);d=shiftDate(d,1);}return out;}
+function rangeBounds(ini,fim){const startMin=Math.floor((new Date(ini+'T00:00:00')-EPOCH)/60000);const endMin=Math.floor((new Date(fim+'T00:00:00')-EPOCH)/60000)+1440;return {startMin,endMin};}
+function filterRange(rows,ini,fim){const {startMin,endMin}=rangeBounds(ini,fim);return rows.filter(r=>{const cm=r[C.CRIA];return cm>=startMin&&cm<endMin;});}
+function rangeSeries(rows,ini,fim){const days=rangeDays(ini,fim),dset=new Set(days),by={};
+ for(const r of rows){const cm=r[C.CRIA];if(cm<0)continue;const d=dateStr(minToDate(cm));if(!dset.has(d))continue;const o=by[d]||(by[d]={sep:0,sepN:0,np:0,tot:0});
   if(r[C.ST]>=0){o.tot++;if(r[C.ST]===0)o.np++;}
   if(r[C.RAP]===1&&r[C.TSEP]>=0){o.sep+=r[C.TSEP];o.sepN++;}}
  return days.map(d=>({d,sepMin:by[d]&&by[d].sepN?by[d].sep/by[d].sepN/60:null,sla:by[d]&&by[d].tot?by[d].np/by[d].tot:null,n:by[d]?by[d].tot:0}));}
@@ -326,7 +325,7 @@ function chartWeekly(series){
    bars+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(mt+ih-y).toFixed(1)}" rx="3" fill="var(--heading)"/>`;
    bars+=`<text x="${cx.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--heading)">${s.sepMin.toFixed(1).replace('.',',')}min</text>`;}
   if(s.n>0)pts.push([cx,yRight(s.sla||0),s.sla||0]);
-  labels+=`<text x="${cx.toFixed(1)}" y="${(H-mb+18).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${WD[i]} ${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
+  labels+=`<text x="${cx.toFixed(1)}" y="${(H-mb+18).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${wdLabel(s.d)} ${s.d.slice(8,10)}/${s.d.slice(5,7)}</text>`;});
  if(pts.length>1)line=`<path d="M${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')}" fill="none" stroke="var(--red)" stroke-width="2"/>`;
  pts.forEach(([cx,cy,sla])=>{dots+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.5" fill="var(--red)"/>`;
   dots+=`<text x="${cx.toFixed(1)}" y="${(cy-8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--red)">${fmtPct(sla)}</text>`;});
@@ -360,13 +359,10 @@ function render(){
  const filRapView=(boardState.filRap==='melhor'
    ?m.filRapAll.filter(x=>x.n>=avgFilRapN).sort((a,b)=>a.avg-b.avg)
    :m.filRapAll.slice().sort((a,b)=>b.avg-a.avg)).slice(0,10);
- if(!chartState.weekStart)chartState.weekStart=mondayOf(dateStr(new Date()));
+ if(!chartState.ini){const t=dateStr(new Date());chartState.fim=t;chartState.ini=shiftDate(t,-6);}
  const wkRows=chartState.pla.size?rows.filter(r=>chartState.pla.has(valOf('pla',r))):rows;
- const wkSeries=weekSeries(wkRows,chartState.weekStart);
- const wkMod=orderMod(compute(filterWeek(wkRows,chartState.weekStart)).mod);
- const wkSunday=shiftDate(chartState.weekStart,6);
- const wkIsCurrent=chartState.weekStart===mondayOf(dateStr(new Date()));
- const wkLabel=(wkIsCurrent?'Vigente · ':'')+'Semana '+isoWeekNum(chartState.weekStart)+' · '+chartState.weekStart.slice(8,10)+'/'+chartState.weekStart.slice(5,7)+' a '+wkSunday.slice(8,10)+'/'+wkSunday.slice(5,7);
+ const wkSeries=rangeSeries(wkRows,chartState.ini,chartState.fim);
+ const wkMod=orderMod(compute(filterRange(wkRows,chartState.ini,chartState.fim)).mod);
  const wkPlaArr=[...chartState.pla];
  const wkPlaLbl=wkPlaArr.length===0?'Todas plataformas':wkPlaArr.length===1?wkPlaArr[0]:wkPlaArr.length+' plataformas';
  const wkPlaSuffix=wkPlaArr.length===1?' ('+esc(wkPlaArr[0])+')':wkPlaArr.length>1?' ('+wkPlaArr.length+' plataformas)':'';
@@ -398,11 +394,11 @@ function render(){
   <div style="height:16px"></div>
   <div class="grid cols-evo">
    ${modalCard(wkMod)}
-   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução semanal — OTD e separação${wkPlaSuffix}</h3><div class="rangepick" style="margin-left:auto;flex-wrap:wrap">
+   <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução — OTD e separação${wkPlaSuffix}</h3><div class="rangepick" style="margin-left:auto;flex-wrap:wrap">
     <div class="ms compact"><button type="button" class="ms-btn" onclick="wkPlaOpenPop(event)"><span class="lbl">${esc(wkPlaLbl)}</span>${wkPlaArr.length>1?`<span class="badge">${wkPlaArr.length}</span>`:''}<span class="chev">▾</span></button>
      <div class="ms-pop${wkPlaPopOpen?' show':''}"><div class="ms-list">${optionsFor('pla').map(o=>`<label class="ms-opt"><input type="checkbox" value="${esc(o)}" ${chartState.pla.has(o)?'checked':''} onchange="wkPlaToggleSel(this.value,this.checked)"><span>${esc(o)}</span></label>`).join('')||'<div class="empty">Sem opções</div>'}</div>
      <div class="ms-actions"><button type="button" onclick="wkPlaClearSel()">Limpar</button><button type="button" onclick="wkPlaClosePop()">Fechar</button></div></div></div>
-    <button type="button" onclick="onWeekNav(-1)" title="Semana anterior">◀</button><b style="font-size:11px;color:var(--heading);white-space:nowrap">${wkLabel}</b><button type="button" onclick="onWeekNav(1)" title="Próxima semana">▶</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div></div></div>
+    <input type="date" value="${chartState.ini}" onchange="onWkRangeChange('ini',this.value)"><span>até</span><input type="date" value="${chartState.fim}" onchange="onWkRangeChange('fim',this.value)"><button type="button" onclick="resetWkRange()" title="Voltar para os últimos 7 dias">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div></div></div>
    <div class="card"><div class="hd"><h3>Nível de serviço — mês vigente</h3></div><div class="bd" style="text-align:center">${donutSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos<br>${gMonth.label}</div></div></div>
   </div>
  </section>
@@ -439,7 +435,8 @@ const THEME_SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const THEME_MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>';
 function updateThemeIcon(){const btn=document.getElementById('btnTheme');if(!btn)return;const dark=document.documentElement.getAttribute('data-theme')==='dark';btn.innerHTML=dark?THEME_SUN:THEME_MOON;btn.title=dark?'Mudar para tema claro':'Mudar para tema escuro';}
 function toggleTheme(){const dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark){document.documentElement.removeAttribute('data-theme');localStorage.setItem('theme','light');}else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('theme','dark');}updateThemeIcon();}
-function onWeekNav(delta){chartState.weekStart=shiftDate(chartState.weekStart,delta*7);render();}
+function onWkRangeChange(which,val){if(!val)return;if(which==='ini')chartState.ini=val;else chartState.fim=val;if(chartState.ini>chartState.fim){if(which==='ini')chartState.fim=chartState.ini;else chartState.ini=chartState.fim;}render();}
+function resetWkRange(){const t=dateStr(new Date());chartState.fim=t;chartState.ini=shiftDate(t,-6);render();}
 function wkPlaOpenPop(e){e.stopPropagation();wkPlaPopOpen=!wkPlaPopOpen;render();}
 function wkPlaToggleSel(val,on){if(on)chartState.pla.add(val);else chartState.pla.delete(val);render();}
 function wkPlaClearSel(){chartState.pla.clear();render();}
