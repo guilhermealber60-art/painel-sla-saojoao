@@ -86,7 +86,7 @@ data/lojas.json     Base fixa de gestores por filial
 ## Premissas dos cálculos
 
 - SLA = No prazo ÷ Sucessos. Atraso quando prazo prometido < entrega.
-- Separação = Criado Abbiamo − Criado VTEX; meta 15 min (No Prazo até 15 min).
+- Separação = VTEX Last Change Date − VTEX Creation Date, só contando pedidos em que as duas datas caem no mesmo dia calendário; meta 15 min (No Prazo até 15 min).
 - Coleta: `IN_TRANSIT` para Uber/99, `DISPATCHED` para as demais; entrega = `SUCCESSFUL`.
 - Pedidos considerados: `SUCCESSFUL` com origem VTEX / API-V2 / API Abbiamo.
 - Fluxo e "tempo de separação" da Entrega Rápida excluem a "Entrega Rápida São João".
