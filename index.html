@@ -79,6 +79,11 @@ td.num,th.num{text-align:right;font-family:"JetBrains Mono";font-variant-numeric
 .rk{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--ink);color:#fff;font-family:"JetBrains Mono";font-weight:700;font-size:11px}
 .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;font-family:"JetBrains Mono"}
 .pill.g{background:var(--greenbg);color:var(--green)}.pill.a{background:var(--amberbg);color:var(--amber)}.pill.r{background:var(--redbg);color:var(--red)}
+.wkplatext{text-align:center;font-size:12px;font-weight:700;color:var(--heading);margin-bottom:6px;letter-spacing:.2px}
+.plabadges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.plabadge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid var(--line2)}
+.plabadge svg{width:13px;height:13px;flex:0 0 auto}
+.plabadge.generic{background:var(--surface2);color:var(--muted)}
 .mini{height:6px;border-radius:4px;background:var(--line2);overflow:hidden;min-width:46px}.mini>i{display:block;height:100%}
 .scroll{max-height:420px;overflow:auto}.statrow{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px solid var(--line2);font-size:12.5px}
 .statrow:last-child{border-bottom:none}.statrow .lb{color:var(--muted)}.statrow .vl{font-family:"JetBrains Mono";font-weight:700}
@@ -234,6 +239,10 @@ const WD=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const wdLabel=ds=>WD[new Date(ds+'T00:00:00').getDay()];
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 function valOf(k,r){if(k==='grp')return r[C.GRP]===1?'Uber+99':'Outros';const map={reg:['REG',C.REG],fil:['FIL',C.FIL],dis:['DIS',C.DIS],coo:['COO',C.COO],dir:['DIR',C.DIR],pla:['PLA',C.PLA],mod:['MOD',C.MOD]}[k];return DICTS[map[0]][r[map[1]]];}
+const PLA_BRAND={'UBER':{txt:'Uber',bg:'#000000',fg:'#FFFFFF'},'99-ENTREGAS':{txt:'99',bg:'#FFD100',fg:'#111111'}};
+function plaDisplay(code){if(PLA_BRAND[code])return PLA_BRAND[code].txt;return String(code==null?'':code).split('-').map(w=>/^\d+$/.test(w)?w:w.charAt(0)+w.slice(1).toLowerCase()).join(' ');}
+function plaBadge(code){const b=PLA_BRAND[code];if(b)return `<span class="plabadge" style="background:${b.bg};color:${b.fg}">${esc(b.txt)}</span>`;
+ return `<span class="plabadge generic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="14" height="10" rx="1.5"/><path d="M15 10h3.5L21 13.5V17h-6z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>${esc(plaDisplay(code))}</span>`;}
 function activeRows(){const{reg,fil,dis,coo,dir,pla,mod,grp,ini,fim}=state;
  const iniM=ini?Math.floor((new Date(ini+'T00:00:00')-EPOCH)/60000):null;
  const fimM=fim?Math.floor((new Date(fim+'T00:00:00')-EPOCH)/60000)+1440:null;
@@ -364,8 +373,8 @@ function render(){
  const wkSeries=rangeSeries(wkRows,chartState.ini,chartState.fim);
  const wkMod=orderMod(compute(filterRange(wkRows,chartState.ini,chartState.fim)).mod);
  const wkPlaArr=[...chartState.pla];
- const wkPlaLbl=wkPlaArr.length===0?'Todas plataformas':wkPlaArr.length===1?wkPlaArr[0]:wkPlaArr.length+' plataformas';
- const wkPlaSuffix=wkPlaArr.length===1?' ('+esc(wkPlaArr[0])+')':wkPlaArr.length>1?' ('+wkPlaArr.length+' plataformas)':'';
+ const wkPlaLbl=wkPlaArr.length===0?'Todas plataformas':wkPlaArr.length===1?plaDisplay(wkPlaArr[0]):wkPlaArr.length+' plataformas';
+ const wkPlaSuffix=wkPlaArr.length===1?' ('+esc(plaDisplay(wkPlaArr[0]))+')':wkPlaArr.length>1?' ('+wkPlaArr.length+' plataformas)':'';
  const gMonth=computeMonthSLA(chartState.pla);
  document.getElementById('board').innerHTML=`
  <section class="slide" data-slide="Indicadores gerais"><div class="sechd"><span class="n">1</span><h2>Indicadores gerais</h2><div class="rule"></div></div>
@@ -396,9 +405,9 @@ function render(){
    ${modalCard(wkMod)}
    <div class="card" id="wkChartCard"><div class="hd"><h3>Evolução — OTD e separação${wkPlaSuffix}</h3><div class="rangepick" style="margin-left:auto;flex-wrap:wrap">
     <div class="ms compact"><button type="button" class="ms-btn" onclick="wkPlaOpenPop(event)"><span class="lbl">${esc(wkPlaLbl)}</span>${wkPlaArr.length>1?`<span class="badge">${wkPlaArr.length}</span>`:''}<span class="chev">▾</span></button>
-     <div class="ms-pop${wkPlaPopOpen?' show':''}"><div class="ms-list">${optionsFor('pla').map(o=>`<label class="ms-opt"><input type="checkbox" value="${esc(o)}" ${chartState.pla.has(o)?'checked':''} onchange="wkPlaToggleSel(this.value,this.checked)"><span>${esc(o)}</span></label>`).join('')||'<div class="empty">Sem opções</div>'}</div>
+     <div class="ms-pop${wkPlaPopOpen?' show':''}"><div class="ms-list">${optionsFor('pla').map(o=>`<label class="ms-opt"><input type="checkbox" value="${esc(o)}" ${chartState.pla.has(o)?'checked':''} onchange="wkPlaToggleSel(this.value,this.checked)"><span>${esc(plaDisplay(o))}</span></label>`).join('')||'<div class="empty">Sem opções</div>'}</div>
      <div class="ms-actions"><button type="button" onclick="wkPlaClearSel()">Limpar</button><button type="button" onclick="wkPlaClosePop()">Fechar</button></div></div></div>
-    <input type="date" value="${chartState.ini}" onchange="onWkRangeChange('ini',this.value)"><span>até</span><input type="date" value="${chartState.fim}" onchange="onWkRangeChange('fim',this.value)"><button type="button" onclick="resetWkRange()" title="Voltar para os últimos 7 dias">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div></div></div>
+    <input type="date" value="${chartState.ini}" onchange="onWkRangeChange('ini',this.value)"><span>até</span><input type="date" value="${chartState.fim}" onchange="onWkRangeChange('fim',this.value)"><button type="button" onclick="resetWkRange()" title="Voltar para os últimos 7 dias">7 dias</button><button type="button" onclick="exportChartImg()">Exportar</button></div></div><div class="bd">${wkPlaArr.length?`<div class="wkplatext">Plataformas filtradas: ${wkPlaArr.map(p=>esc(plaDisplay(p))).join(' · ')}</div>`:''}${chartWeekly(wkSeries)}<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:11px;height:11px;background:var(--heading);border-radius:2px;vertical-align:-1px"></span> Separação — Entrega Rápida (min)</span><span><span style="display:inline-block;width:11px;height:11px;background:var(--red);border-radius:2px;vertical-align:-1px"></span> OTD / SLA (%)</span></div>${wkPlaArr.length?`<div class="plabadges">${wkPlaArr.map(p=>plaBadge(p)).join('')}</div>`:''}</div></div>
    <div class="card"><div class="hd"><h3>Nível de serviço — mês vigente</h3></div><div class="bd" style="text-align:center">${donutSLA(gMonth)}<div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtInt(gMonth.np)} no prazo · ${fmtInt(gMonth.at)} atrasos · ${fmtInt(gMonth.suc)} pedidos<br>${gMonth.label}</div></div></div>
   </div>
  </section>
